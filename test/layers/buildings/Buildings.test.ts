@@ -27,6 +27,7 @@ import {
   type TileRequest,
   Utils
 } from '../../../src'
+import { clipRect, isRing } from '../../../src/layers/features'
 import { terrariumPixels } from '../../support/helpers'
 
 const { loadImageData } = vi.hoisted(() => ({ loadImageData: vi.fn() }))
@@ -102,6 +103,51 @@ const withHole = (fx: number, fy: number, size: number): BuildingFeature => {
     }
   }
 }
+
+/** A rectangle in tile units from the center tile, as a flat ring. */
+const rect = (x0: number, y0: number, x1: number, y1: number) => [
+  x0,
+  y0,
+  x1,
+  y0,
+  x1,
+  y1,
+  x0,
+  y1
+]
+
+/** A source like vector tiles: every building cut to the tile asked for. */
+const cutByTiles =
+  (buildings: { rings: number[][]; feature?: Partial<BuildingFeature> }[]) =>
+  ({ x, y }: TileRequest) => {
+    const [tx, ty] = [x - center.x, y - center.y]
+    const positions = (ring: number[]) => {
+      const out = []
+      for (let i = 0; i < ring.length; i += 2) {
+        out.push([
+          Utils.tile2lon(center.x + ring[i], ZOOM),
+          Utils.tile2lat(center.y + ring[i + 1], ZOOM)
+        ])
+      }
+      return out
+    }
+    return Promise.resolve(
+      buildings.flatMap(({ rings, feature }): BuildingFeature[] => {
+        const cut = rings.map((ring) => clipRect(ring, tx, ty, tx + 1, ty + 1))
+        if (!isRing(cut[0])) return []
+        return [
+          {
+            geometry: {
+              type: 'Polygon',
+              coordinates: cut.filter(isRing).map(positions)
+            },
+            properties: {},
+            ...feature
+          }
+        ]
+      })
+    )
+  }
 
 const setup = async (
   buildings:
@@ -495,6 +541,82 @@ describe('Buildings', () => {
     map.setMaterial({ color: '#00ff00' })
     await layer.whenReady()
     expect(new Set(vertexColors())).toEqual(new Set([0xff0000, 0x00ff00]))
+  })
+
+  describe('cut by their source tiles', () => {
+    it('joins a building vector tiles cut: drawn once, whole, at one height', async () => {
+      // 0.8…1.3: across the border of the center tile and its eastern neighbour
+      const { map, layer } = await setup(
+        cutByTiles([
+          { rings: [rect(0.8, 0.3, 1.3, 0.5)], feature: { height: 20 } }
+        ])
+      )
+      const { tileSize } = map.options
+
+      expect(layer.count).toBe(1)
+      // by the tile of its larger piece, in its local coordinates
+      const east = Utils.getTileKey(ZOOM, center.x + 1, center.y)
+      expect(part(layer, 'roofs').map(({ name }) => name)).toEqual([
+        `buildings roofs ${east}`
+      ])
+      const [roof] = part(layer, 'roofs')
+      roof.geometry.computeBoundingBox()
+      expect(roof.geometry.boundingBox?.min.x).toBeCloseTo(-0.7 * tileSize, 6)
+      expect(roof.geometry.boundingBox?.max.x).toBeCloseTo(-0.2 * tileSize, 6)
+      const roofs = roof.geometry.getAttribute('position')
+      const heights = Array.from({ length: roofs.count }, (_, i) =>
+        roofs.getZ(i)
+      )
+      expect(new Set(heights).size).toBe(1)
+      // no walls along the border, at x = -0.5 × tileSize
+      const walls = part(layer, 'walls')[0].geometry.getAttribute('position')
+      const xs = Array.from({ length: walls.count }, (_, i) => walls.getX(i))
+      expect(xs.some((x) => Math.abs(x + 0.5 * tileSize) < 1e-6)).toBe(false)
+
+      // picked whole on either side
+      const west = layer.pick(rayDown(map, 0.9, 0.4))
+      expect(west?.feature).toBe(layer.pick(rayDown(map, 1.2, 0.4))?.feature)
+      expect(west?.feature.height).toBe(20)
+      expect(west?.feature.geometry.coordinates[0]).toHaveLength(5)
+    })
+
+    it('joins the pieces when their neighbour loads, and parts them when it goes', async () => {
+      // 1.8…2.3: its eastern piece in a tile outside the grid
+      const { map, layer } = await setup(
+        cutByTiles([{ rings: [rect(1.8, 0.3, 2.3, 0.5)] }]),
+        { clip: false }
+      )
+      const eastEnd = () => {
+        const { feature } = layer.pick(rayDown(map, 1.9, 0.4)) ?? {}
+        if (feature?.geometry.type !== 'Polygon') return undefined
+        const lons = feature.geometry.coordinates[0].map(([lon]) => lon)
+        return ((Math.max(...lons) + 180) / 360) * 2 ** ZOOM - center.x
+      }
+
+      expect(layer.count).toBe(1)
+      expect(eastEnd()).toBeCloseTo(2, 9)
+
+      await map.addTileSegment(center.x + 2, center.y)
+      await layer.whenReady()
+      expect(layer.count).toBe(1)
+      expect(eastEnd()).toBeCloseTo(2.3, 9)
+
+      map.removeTileSegment(center.x + 2, center.y)
+      await layer.whenReady()
+      expect(layer.count).toBe(1)
+      expect(eastEnd()).toBeCloseTo(2, 9)
+    })
+
+    it('keeps buildings of other heights apart', async () => {
+      const { layer } = await setup(
+        cutByTiles([
+          { rings: [rect(0.8, 0.3, 1, 0.5)], feature: { height: 10 } },
+          { rings: [rect(1, 0.3, 1.3, 0.5)], feature: { height: 20 } }
+        ])
+      )
+
+      expect(layer.count).toBe(2)
+    })
   })
 
   describe('clip', () => {

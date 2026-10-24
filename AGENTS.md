@@ -55,7 +55,8 @@ src/                      library (the only published code, plus dist/)
                           triangles in a grid (CSR arrays)
     features.ts           Position, Ring, toNumber, parseLength, clipRect, classifyRings
     buildings/            Buildings (ownership, grounding, clip), BuildingSource
-                          (schema), features (MVT schemas), osm (tags, Overpass)
+                          (schema), features (MVT schemas), osm (tags, Overpass),
+                          join (pieces cut by vector tiles, joined again)
     roads/                Roads (ribbons, decks, piers), RoadSource (schema),
                           features (kinds, widths, MVT schemas), osm, bridges
                           (joining pieces, deck profile)
@@ -255,7 +256,8 @@ depends on the published package. After a release, bump it there.
   - Per terrain tile an entry: its source tiles (`SourceTiles.covering`: at
     `clamp(terrain zoom, minZoom, maxZoom)`; deeper terrain shares one,
     shallower loads up to 4² children; refcounted, aborted when unused),
-    `select(tile, source, features)` (ownership), then `build(ctx, draw)`
+    `select(tile, source, features)` (ownership; asked at every drawing,
+    so it may follow `prepare()`), then `build(ctx, draw)`
     (`options.build`, else the layer's `draw`).
   - Drawing is sliced (`scheduler.ts`, one queue for every layer and map):
     `schedule()` marks the layer stale and kicks a slice (a `MessageChannel`
@@ -345,6 +347,22 @@ depends on the published package. After a release, bump it there.
   - Vector tile features are split per polygon (tile generators merge
     equal buildings into one multi-polygon; such ids are dropped) and
     clipped to their tile (buffers would draw twice).
+  - Pieces (`join.ts`): a building crossing a source tile border comes in
+    pieces — grounded each on its own, outlined along the cut. Features in
+    their source tile with edges on its border are pieces (`cutPieces` in
+    `sourceLoaded`; whole ones, e.g. Overpass, reach beyond it); on every
+    border each joins the piece on the other side whose stretch matches
+    best (≥ half overlapping, same `height`/`minHeight`/`color`, ids equal
+    if both have one: duplicates — outline and part as tall — stay apart).
+    `prepare()` unites each group: border edges add up signed along the
+    border (opposite ones cancel, so do Sutherland–Hodgman's bridges),
+    points closer than 1/4096 tile merged first (tiles are simplified each
+    on its own: OpenFreeMap's crossings differ by mm–dm), the rest linked
+    into rings. The building is drawn in place of its largest piece whose
+    tile is loaded (`select`), the other pieces left out; tiles whose
+    joins change (signatures of piece serials) are drawn again. OpenFreeMap
+    building ids are useless across tiles (one feature per height, ~2000
+    rings), hence geometry.
   - Grounding: the ground is sampled along the outer walls every half
     terrain segment (`Tile.heightAt`, neighbours if loaded); walls from 0.5 m
     below the lowest point, the roof `height` above it and at least 3 m
@@ -477,7 +495,8 @@ spot, feature, { tree, bush })` what grows there — `tree(height?)`,
 - Keep `src/` grouped by area; new public modules are re-exported from
   their folder's `index.ts`. Internal helpers (`io/fetch`, `io/image`,
   `sources/tile-source` internals, `sources/source-tiles`, `layers/drape`
-  cutting, `layers/extrude`, `layers/roads/bridges`) stay out of the barrels.
+  cutting, `layers/extrude`, `layers/roads/bridges`, `layers/buildings/join`)
+  stay out of the barrels.
 - A new kind of layer goes on `FeatureLayer` (a folder under `src/layers/`
   with its source schema, features and layer class); new shared geometry
   goes into `TileContext` primitives only if more than one layer needs it.

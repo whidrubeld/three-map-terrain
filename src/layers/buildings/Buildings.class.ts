@@ -6,8 +6,14 @@ import {
   BuildingSource,
   type BuildingSourceProps
 } from './BuildingSource.class'
+import {
+  type BuildingPiece,
+  cutPieces,
+  groupPieces,
+  joinedBuilding
+} from './join'
 import type { FlatRing } from '../extrude'
-import { clipRect, isRing, type Ring } from '../features'
+import { clipRect, isRing, type Position, type Ring } from '../features'
 import {
   type DrawFeatures,
   type FeatureHit,
@@ -108,15 +114,42 @@ const polygonsOf = (feature: BuildingFeature): readonly (readonly Ring[])[] =>
     ? [feature.geometry.coordinates]
     : feature.geometry.coordinates
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value))
+
+/** A building joined from the pieces its source tiles cut it in. */
+interface Join {
+  feature: BuildingFeature
+  /** The piece it is drawn in place of. */
+  main: BuildingFeature
+  /** Its pieces, the main one first: changes when they do. */
+  signature: string
+}
+
 /**
  * 3D buildings on the terrain: `map.addLayer(new Buildings({ source: {
  * api: 'openfreemap' } }))`. Every building is drawn once, whole, by the
  * terrain tile its center lies in, standing on the rendered surface;
- * heights are scaled by the map's `zScale`.
+ * heights are scaled by the map's `zScale`. Buildings that vector tiles cut
+ * at their borders are joined again.
  */
 export class Buildings extends FeatureLayer<BuildingFeature> {
   declare readonly source: BuildingSource
   readonly options: Omit<BuildingsOptions, 'source'>
+
+  private readonly anchors = new WeakMap<
+    BuildingFeature,
+    Position | undefined
+  >()
+  /** Buildings cut at the border of their source tile, by source tile. */
+  private readonly pieces = new globalThis.Map<string, BuildingPiece[]>()
+  private readonly pieceIds = new WeakMap<BuildingPiece, number>()
+  private pieceCount = 0
+  /** The joined building of each piece of one. */
+  private joins = new globalThis.Map<BuildingFeature, Join>()
+  private joinsDirty = false
+  /** The joins of the pieces each tile draws: the tile follows their changes. */
+  private readonly tileJoins = new globalThis.Map<Tile, string>()
 
   constructor({
     source,
@@ -193,30 +226,148 @@ export class Buildings extends FeatureLayer<BuildingFeature> {
     return material
   }
 
+  // --- buildings across source tiles ----------------------------------------
+
+  override tileRemoved(tile: Tile) {
+    super.tileRemoved(tile)
+    this.tileJoins.delete(tile)
+    this.piecesChanged()
+  }
+
+  protected override sourceLoaded(
+    key: SourceTileKey,
+    features: readonly BuildingFeature[]
+  ) {
+    if (!this.pieces.has(key.key)) {
+      const pieces = cutPieces(features, key)
+      for (const piece of pieces) this.pieceIds.set(piece, this.pieceCount++)
+      this.pieces.set(key.key, pieces)
+    }
+    // one more tile that may draw them
+    this.piecesChanged()
+  }
+
+  protected override sourceDropped(key: string) {
+    this.pieces.delete(key)
+    this.piecesChanged()
+  }
+
+  private piecesChanged() {
+    const any = [...this.pieces.values()].some((pieces) => pieces.length > 0)
+    if (!any && this.joins.size === 0) return
+    this.joinsDirty = true
+    this.schedule()
+  }
+
+  /**
+   * Joins the pieces of each building across source tiles: it is drawn in
+   * place of its largest piece that a tile draws, the others are left out.
+   * Tiles whose pieces join otherwise are drawn again.
+   */
+  protected override prepare() {
+    if (!this.joinsDirty || !this.map) return
+    this.joinsDirty = false
+    const loaded = new Set(this.loadedTiles)
+    const previous = new globalThis.Map(
+      [...this.joins.values()].map((join) => [join.signature, join])
+    )
+    const joins = new globalThis.Map<BuildingFeature, Join>()
+    const byTile = new globalThis.Map<Tile, string[]>()
+    const id = (piece: BuildingPiece) => String(this.pieceIds.get(piece))
+
+    for (const group of groupPieces([...this.pieces.values()].flat())) {
+      const owners = group.map((piece) => this.ownerOf(piece.feature, loaded))
+      let main: BuildingPiece | undefined
+      for (const [i, piece] of group.entries()) {
+        if (owners[i] && (!main || piece.area > main.area)) main = piece
+      }
+      if (!main) continue
+      const signature = `${id(main)}: ${group.map(id).join(' ')}`
+      let join = previous.get(signature)
+      if (!join) {
+        const feature = joinedBuilding(group, main)
+        if (!feature) continue
+        join = { feature, main: main.feature, signature }
+      }
+      for (const [i, piece] of group.entries()) {
+        joins.set(piece.feature, join)
+        const owner = owners[i]
+        if (!owner) continue
+        const list = byTile.get(owner)
+        if (list) list.push(signature)
+        else byTile.set(owner, [signature])
+      }
+    }
+    this.joins = joins
+
+    for (const tile of loaded) {
+      const signature = (byTile.get(tile) ?? []).sort().join(' | ')
+      if (signature !== (this.tileJoins.get(tile) ?? '')) {
+        this.tileJoins.set(tile, signature)
+        this.invalidate([tile])
+      }
+    }
+  }
+
+  /** The loaded tile that draws a feature — its anchor's — if any. */
+  private ownerOf(feature: BuildingFeature, loaded: ReadonlySet<Tile>) {
+    const map = this.map
+    const anchor = this.anchor(feature)
+    if (!map || !anchor) return undefined
+    const { zoom } = map.options
+    const f = Utils.position2tileFraction(anchor[1], anchor[0], zoom)
+    let [x, y] = [Math.floor(f.x), Math.floor(f.y)]
+    const { grid } = map
+    if (this.options.clip && grid.zoom === zoom) {
+      x = clamp(x, grid.minX, grid.maxX)
+      y = clamp(y, grid.minY, grid.maxY)
+    }
+    const tile = map.tileCache[Utils.getTileKey(zoom, x, y)] as Tile | undefined
+    return tile && loaded.has(tile) ? tile : undefined
+  }
+
+  // --- which tile draws a building ------------------------------------------
+
   /**
    * A building belongs to the tile its center (of the first outer ring's
    * bounding box) lies in — once, although sources return it for every tile
    * it touches. With `clip`, one whose center is outside the grid belongs
-   * to the nearest tile of the grid, which draws the part reaching in.
+   * to the nearest tile of the grid, which draws the part reaching in. A
+   * building joined from pieces is drawn in place of its main piece.
    */
   protected override select(
     tile: Tile,
     source: SourceTileKey,
-    features: BuildingFeature[]
+    features: readonly BuildingFeature[]
   ): BuildingFeature[] {
-    return features.filter((feature) => this.owns(tile, source, feature))
+    const selected: BuildingFeature[] = []
+    for (const feature of features) {
+      const join = this.joins.get(feature)
+      if (join && join.main !== feature) continue
+      if (this.owns(tile, source, feature)) {
+        selected.push(join?.feature ?? feature)
+      }
+    }
+    return selected
+  }
+
+  /** Where a building belongs: the center of its first outer ring's bounds. */
+  private anchor(feature: BuildingFeature): Position | undefined {
+    if (this.anchors.has(feature)) return this.anchors.get(feature)
+    const outer = polygonsOf(feature).at(0)?.at(0)
+    const anchor = outer && outer.length >= 3 ? ringAnchor(outer) : undefined
+    this.anchors.set(feature, anchor)
+    return anchor
   }
 
   private owns(tile: Tile, source: SourceTileKey, feature: BuildingFeature) {
-    const outer = polygonsOf(feature).at(0)?.at(0)
-    if (!outer || outer.length < 3) return false
-    const [lon, lat] = ringAnchor(outer)
+    const anchor = this.anchor(feature)
+    if (!anchor) return false
+    const [lon, lat] = anchor
     const anchorAt = (z: number) => {
       const f = Utils.position2tileFraction(lat, lon, z)
       return [Math.floor(f.x), Math.floor(f.y)]
     }
-    const clamp = (value: number, min: number, max: number) =>
-      Math.max(min, Math.min(max, value))
 
     let [x, y] = anchorAt(tile.z)
     const grid = this.clipGrid(tile)
