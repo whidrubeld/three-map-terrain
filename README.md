@@ -204,7 +204,7 @@ map.focus = camera.position // or controls.target: followed as it moves
 ### Buildings
 
 - **On the surface.** Walls start just below the lowest ground under them; the roof is `height` meters above it — and at least 3 m above the highest ground on a slope. Heights are scaled like the terrain. Parts with a `minHeight` (overhangs, towers on podiums) float with a floor; courtyards stay open. Roofs are flat.
-- **Once, whole.** A building is drawn by the terrain tile its center lies in, so one crossing a tile border is drawn once and never cut. Sources whose tiles are coarser than the terrain (most stop at zoom 14) are loaded once for the terrain tiles they cover.
+- **Once, whole.** A building is drawn by the terrain tile its center lies in, so one crossing a tile border is drawn once and never cut. Vector tiles cut buildings at their borders: the pieces of one (the same stretch of the border from both sides, the same height) are joined again as their tiles load. Sources whose tiles are coarser than the terrain (most stop at zoom 14) are loaded once for the terrain tiles they cover.
 - **Cut at the edge.** With `clip` (default) buildings end with the grid: those crossing its edge are cut along it, and the parts of buildings outside that reach in are drawn — a clean section on a `TerrainBase`.
 - **Data.** Heights, minimum heights and colors come from the source: OSM `height`, `building:levels` (3 m each; of several sections — `9;10`, `9,10` — the highest), `min_height`, `building:colour`; vector tiles with these precomputed. Outlines that have `building:part`s are left to the parts. Buildings without a height get `defaultHeight` — so do those above 1000 m, which no building reaches: a data error.
 - **Parts.** Every tile has a mesh of `walls` (UVs in meters along and up), `roofs`, `floors` and the `edges` (lines, with `edges` or in wireframe) — each can have [its own material](#materials).
@@ -579,7 +579,7 @@ new VegetationSource({
 }) // kind: 'orchard', from the landuse tag: trees by default
 ```
 
-Or anything else with `load`: return the features of a tile — buildings as GeoJSON-like polygons, whole (each is drawn by the tile its center is in) or clipped to the tile; roads as lines, whole or clipped (pieces of a bridge with the same `id` are joined):
+Or anything else with `load`: return the features of a tile — buildings as GeoJSON-like polygons, whole (each is drawn by the tile its center is in) or clipped to the tile (pieces of a building are joined); roads as lines, whole or clipped (pieces of a bridge with the same `id` are joined):
 
 ```ts
 new BuildingSource({

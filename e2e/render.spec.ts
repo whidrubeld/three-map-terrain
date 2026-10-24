@@ -414,6 +414,58 @@ test('draws buildings from vector tiles on the terrain and picks them', async ({
   expect(errors).toEqual([])
 })
 
+test('joins a building vector tiles cut at their border', async ({ page }) => {
+  const errors = collectErrors(page)
+  const zoom = 14
+  const center = Utils.position2tile(46.57634, 7.9904, zoom)
+  // from 0.8 of the center tile to 0.2 of its eastern neighbour: a piece in
+  // each tile, the buffer beyond it cut off by the reader
+  const tile = (x0: number, x1: number) =>
+    encodeVectorTile([
+      {
+        name: 'building',
+        features:
+          x0 === x1
+            ? []
+            : [
+                {
+                  type: 3,
+                  properties: { render_height: 30, render_min_height: 0 },
+                  geometry: [[x0, 1638, x1, 1638, x1, 2458, x0, 2458]]
+                }
+              ]
+      }
+    ])
+  const [west, east, empty] = [tile(3277, 4500), tile(-819, 819), tile(0, 0)]
+
+  await openPlayground(
+    page,
+    `renderer=webgl&view=top&lights=0&zoom=${zoom}&buildings=openfreemap&edges=1`,
+    {
+      vectorTiles: (_z, x, y) =>
+        y !== center.y
+          ? empty
+          : x === center.x
+            ? west
+            : x === center.x + 1
+              ? east
+              : empty
+    }
+  )
+  // once, by one tile: not a piece in each
+  const drawn = await page.evaluate(() => {
+    const buildings = window.__playground?.buildings
+    return {
+      count: buildings?.count,
+      roofs: buildings?.group.children.filter(({ name }) =>
+        name.startsWith('buildings roofs')
+      ).length
+    }
+  })
+  expect(drawn).toEqual({ count: 1, roofs: 1 })
+  expect(errors).toEqual([])
+})
+
 for (const renderer of ['webgl', 'webgpu'] as const) {
   test(`hides the layers' tiles beyond maxDistance from the camera (${renderer})`, async ({
     page

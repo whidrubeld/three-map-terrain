@@ -626,8 +626,16 @@ export class FeatureLayer<F> implements MapLayer, GroundCover {
 
   // --- for layers -----------------------------------------------------------
 
-  /** Which features of a source tile a terrain tile draws; all by default. */
-  protected select(_tile: Tile, _source: SourceTileKey, features: F[]): F[] {
+  /**
+   * Which features of a source tile a terrain tile draws; all by default.
+   * Asked whenever the tile is drawn: the answer may change with what
+   * spans tiles (see `prepare`).
+   */
+  protected select(
+    _tile: Tile,
+    _source: SourceTileKey,
+    features: readonly F[]
+  ): readonly F[] {
     return features
   }
 
@@ -798,7 +806,7 @@ export class FeatureLayer<F> implements MapLayer, GroundCover {
       return {
         key,
         rect: this.sourceRect(entry.tile, key),
-        features: this.select(entry.tile, key, results[i])
+        features: results[i]
       }
     })
     this.dirty.add(entry)
@@ -885,7 +893,11 @@ export class FeatureLayer<F> implements MapLayer, GroundCover {
   private render(entry: TileEntry<F>, sources: SourceFeatures<F>[]) {
     this.removeObjects(entry)
     const skipped = new Set<string>()
-    const ctx = new TileContext<F>(entry.tile, sources, (part, kind) => {
+    const selected = sources.map((source) => ({
+      ...source,
+      features: this.select(entry.tile, source.key, source.features)
+    }))
+    const ctx = new TileContext<F>(entry.tile, selected, (part, kind) => {
       const shown = this.shows(part, kind)
       if (!shown) skipped.add(`${kind}:${part}`)
       return shown
