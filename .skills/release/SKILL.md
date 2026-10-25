@@ -1,6 +1,8 @@
 ---
 name: release
 description: Prepare and publish a new three-map-terrain version to npm — choose the semver bump, update version and docs, verify, tag and create the GitHub release that triggers the publish workflow. Use when asked to release, publish, cut a version, or bump the package version.
+metadata:
+  internal: true
 ---
 
 # Release
@@ -30,14 +32,17 @@ The public API is everything exported from `src/index.ts`.
 ## 2. Prepare (on a branch, then PR to `master`)
 
 1. `package.json` → `version`.
-2. `README.md` — documentation for any changed API, install/peer notes.
-3. `yarn validate && yarn test:e2e`, then build both examples (see the
-   `upgrade-dependencies` skill, step 5).
-4. If the examples look different, refresh the README images:
+2. The docs (`docs/src/content/docs/`) for any changed API, install/peer
+   notes; `README.md` if the features or the quick start changed.
+3. `yarn validate && yarn test:e2e`, then build both examples and the docs
+   (see the `upgrade-dependencies` skill, step 5).
+4. If the examples or the demos look different, refresh the images:
    `yarn screenshots` (Google Chrome for GPU rendering, `cwebp`; 1280×800
-   at 2×) and look at `docs/*.webp`.
-5. Check the package contents: `npm pack --dry-run` — only `dist/` and
-   `src/` (with their folders), `README.md`, `LICENSE`, `package.json`.
+   at 2×; `yarn screenshots demo-alps …` for some) and look at
+   `docs/public/images/*.webp`.
+5. Check the package contents: `npm pack --dry-run` — only `dist/`,
+   `src/` and `skills/` (with their folders), `README.md`, `LICENSE`,
+   `package.json`.
 
 ## 3. Publish (needs the user's go-ahead — it is public and irreversible)
 
@@ -60,11 +65,12 @@ tag (`gh workflow run publish-package.yml --ref v<version>`). A rerun uses the
 workflow file of the tagged commit; if the fix is in the workflow itself, move
 the tag: `gh release delete v<version> --cleanup-tag --yes`, then create the
 release again. Pushing to
-`master` also redeploys the live example on GitHub Pages (`examples/react`).
+`master` also redeploys the site on GitHub Pages: the docs, with both
+examples under `/examples/`.
 
 ## 4. After the release
 
 GPX Terrain ([whidrubeld/gpx-terrain](https://github.com/whidrubeld/gpx-terrain))
-uses the published package and appears in the README's Examples section
+uses the published package and appears in the Examples of the README and the docs
 (its own `docs/hero.webp`): bump `three-map-terrain` there (its `release`
 skill) and, if the app looks different, refresh its screenshots.

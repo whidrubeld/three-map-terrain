@@ -24,23 +24,34 @@ jobs:
           cache: yarn
           cache-dependency-path: |
             yarn.lock
+            docs/yarn.lock
             examples/react/yarn.lock
+            examples/basic/yarn.lock
 
       - name: Build package
         run: |
           yarn install --frozen-lockfile
           yarn build
 
-      # the live example: examples/react. The full app built with the library,
-      # GPX Terrain, lives in its own repository (whidrubeld/gpx-terrain)
-      - name: Build example
-        working-directory: examples/react
+      # the documentation, at the root of the site
+      - name: Build docs
+        working-directory: docs
         run: |
           yarn install --frozen-lockfile
           yarn build
+
+      # the examples under /examples/: the live example (examples/react) and
+      # the basic one. The full app built with the library, GPX Terrain,
+      # lives in its own repository (whidrubeld/gpx-terrain)
+      - name: Build examples
+        run: |
+          for example in react basic; do
+            (cd examples/$example && yarn install --frozen-lockfile && yarn build)
+            cp -R examples/$example/dist docs/dist/examples/$example
+          done
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.9.0
         with:
           branch: gh-pages
-          folder: examples/react/dist
+          folder: docs/dist

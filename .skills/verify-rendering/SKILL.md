@@ -1,6 +1,8 @@
 ---
 name: verify-rendering
 description: Check that three-map-terrain actually renders correctly in a browser — run the playground or the examples against real tile servers and inspect them with Playwright (and optionally the three.js devtools MCP). Use after changing src/, the material or texture code, three.js versions, lighting, or the examples, and whenever a task says "make sure the map still works / looks right".
+metadata:
+  internal: true
 ---
 
 # Verify rendering
@@ -158,6 +160,11 @@ yarn build                                  # examples use dist/
 (cd examples/basic && yarn start)           # webpack-dev-server, port 8080
 (cd examples/react && yarn dev)             # vite, port 5173 (the live example)
 ```
+
+The docs' demos: `yarn build`, then `(cd docs && yarn dev)` (port 4321,
+`/three-map-terrain/`): Getting started, Layers, Your own layers and
+Materials each have one — **Run the demo**, wait for the tiles, click in it
+(status line), switch the looks on Materials, in both themes.
 
 Same checklist as above. The React example runs in `StrictMode`, so
 `init → clean → init` happens on mount — there must be exactly 9 tiles and no

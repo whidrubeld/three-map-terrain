@@ -46,6 +46,29 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+  # type-checks the demos, builds the pages and their Markdown, validates
+  # the internal links
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: |
+            yarn.lock
+            docs/yarn.lock
+      - name: Build library
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+      - name: Build docs
+        working-directory: docs
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+
   examples:
     runs-on: ubuntu-latest
     strategy:

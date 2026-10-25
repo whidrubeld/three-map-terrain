@@ -1,0 +1,58 @@
+---
+// A live demo — src/demos/<name>.ts, run on a click — and its code below.
+// Until it runs, public/images/demo-<name>.webp if there is one (made by
+// scripts/screenshots.mjs). In the pages' Markdown (llms.txt, Copy page)
+// only the code is left.
+import { existsSync } from 'node:fs'
+
+import { Code } from '@astrojs/starlight/components'
+
+interface Props {
+  /** A file of src/demos, without `.ts`. */
+  name: string
+  /** What it shows. */
+  title: string
+  /** Whether to show its code (default true). */
+  code?: boolean
+}
+
+const { name, title, code = true } = Astro.props
+
+const sources = import.meta.glob<string>('../demos/*.ts', {
+  query: '?raw',
+  import: 'default',
+  eager: true
+})
+const source = sources[`../demos/${name}.ts`]
+if (source === undefined) throw new Error(`No demo src/demos/${name}.ts`)
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+// astro runs in docs/
+const poster = existsSync(`public/images/demo-${name}.webp`)
+  ? `${base}/images/demo-${name}.webp`
+  : undefined
+---
+
+<demo-player data-name={name} data-mdast='ignore' class='not-content'>
+  <div class='demo-head'>
+    <span class='hud'>Demo</span>
+    <span class='hud demo-title'>{title}</span>
+    <span class='rule'></span>
+    <span class='hud demo-state'></span>
+  </div>
+  <div class='demo-frame dot-matrix ticks'>
+    {
+      poster && (
+        <img class='demo-poster' src={poster} alt={title} loading='lazy' />
+      )
+    }
+    <button type='button' class='demo-run'>
+      <span><span aria-hidden='true'>▶</span> Run the demo</span>
+    </button>
+  </div>
+</demo-player>
+{code && <Code code={source.trim()} lang='ts' title={`${name}.ts`} />}
+
+<script>
+  import './demo-player'
+</script>

@@ -9,6 +9,7 @@ export default defineConfig(
   globalIgnores([
     'dist',
     'coverage',
+    'docs',
     'examples',
     'playwright-report',
     'test-results'

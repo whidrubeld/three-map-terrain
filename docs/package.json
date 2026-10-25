@@ -1,0 +1,40 @@
+{
+  "name": "three-map-terrain-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The three-map-terrain documentation: Astro Starlight, on GitHub Pages with the examples",
+  "scripts": {
+    "dev": "astro dev --force",
+    "typecheck": "astro check",
+    "build": "astro check && astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "three": "^0.186.1",
+    "three-map-terrain": "link:.."
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@astrojs/markdown-satteri": "^0.4.5",
+    "@astrojs/mdx": "^8.1.1",
+    "@astrojs/starlight": "^0.42.7",
+    "@emnapi/runtime": "^1.7.1",
+    "@fontsource-variable/doto": "^5.3.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@types/three": "^0.186.0",
+    "astro": "^7.4.2",
+    "hast-util-select": "^6.0.4",
+    "rehype-parse": "^9.0.1",
+    "rehype-remark": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-stringify": "^11.0.0",
+    "sharp": "^0.35.5",
+    "starlight-links-validator": "^0.27.0",
+    "starlight-llm-actions": "^0.13.0",
+    "typescript": "~6.0.3",
+    "unified": "^11.0.5",
+    "unist-util-remove": "^4.0.0"
+  }
+}

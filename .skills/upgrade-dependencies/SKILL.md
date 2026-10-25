@@ -1,21 +1,24 @@
 ---
 name: upgrade-dependencies
-description: Upgrade the npm dependencies of three-map-terrain (library root, examples/basic, examples/react) to the latest compatible versions, resolve breaking changes (three.js releases, TypeScript, ESLint, Vite/Vitest, React Three Fiber) and verify that rendering still works. Use when asked to update, bump or upgrade packages, refresh lockfiles, fix outdated or vulnerable dependencies, or move to a new three.js release.
+description: Upgrade the npm dependencies of three-map-terrain (library root, examples/basic, examples/react, docs) to the latest compatible versions, resolve breaking changes (three.js releases, TypeScript, ESLint, Vite/Vitest, React Three Fiber) and verify that rendering still works. Use when asked to update, bump or upgrade packages, refresh lockfiles, fix outdated or vulnerable dependencies, or move to a new three.js release.
+metadata:
+  internal: true
 ---
 
 # Upgrade dependencies
 
-The repo has **three independent package roots**, each with its own `yarn.lock`
+The repo has **four independent package roots**, each with its own `yarn.lock`
 (Yarn classic 1.x):
 
-| Root             | Bundler        | Notes                                                                    |
-| ---------------- | -------------- | ------------------------------------------------------------------------ |
-| `.`              | Vite (library) | `three` is a peer + dev dependency                                       |
-| `examples/basic` | webpack        | links the library via `link:../..`; `pmtiles` for the Overture source    |
-| `examples/react` | Vite           | React Three Fiber + drei, `link:../..`; the live example on GitHub Pages |
+| Root             | Bundler        | Notes                                                                                                  |
+| ---------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| `.`              | Vite (library) | `three` is a peer + dev dependency                                                                     |
+| `examples/basic` | webpack        | links the library via `link:../..`; `pmtiles` for the Overture source                                  |
+| `examples/react` | Vite           | React Three Fiber + drei, `link:../..`; the live example on GitHub Pages                               |
+| `docs`           | Astro          | Starlight + plugins, `link:..`; `three` for the demos; `@emnapi/runtime` is a peer Yarn 1 does not add |
 
-The examples consume the **built** library (`dist/`), so always upgrade and
-build the root first.
+The examples and the docs consume the **built** library (`dist/`), so always
+upgrade and build the root first.
 
 `map.export()` drives three's exporters (`three/addons/exporters/*`:
 GLTF, OBJ, STL, USDZ) through `src/export/model.ts`; `test/export` runs them
@@ -27,6 +30,7 @@ GLTF, OBJ, STL, USDZ) through `src/export/model.ts`; `test/export` runs them
 yarn outdated
 (cd examples/basic && yarn outdated)
 (cd examples/react && yarn outdated)
+(cd docs && yarn outdated)
 ```
 
 For every major bump, read the peer ranges and engines **before** editing:
@@ -63,7 +67,12 @@ Edit ranges in `package.json` (caret for most packages, tilde for `typescript`),
 then run `yarn install` in that root so the lockfile follows. If the lockfile
 fights back, delete `node_modules` + `yarn.lock` for that root and reinstall.
 
-Order: root → `yarn build` → `examples/basic` → `examples/react`.
+Order: root → `yarn build` → `examples/basic` → `examples/react` → `docs`.
+
+In `docs`, Astro, `@astrojs/starlight` and its plugins move together: check
+the plugins' peer ranges (`starlight-llm-actions`, `starlight-links-validator`)
+before raising Starlight, and that `astro check` still supports the
+TypeScript in use.
 
 ## 4. three.js releases
 
@@ -88,6 +97,7 @@ yarn validate             # typecheck, lint, format:check, unit tests, build
 yarn test:e2e             # real rendering in Chromium: WebGL + WebGPURenderer
 (cd examples/basic && yarn install && yarn build)
 (cd examples/react && yarn install && yarn build)
+(cd docs && yarn install && yarn build)   # astro check, pages, llms.txt, links
 ```
 
 - After a three.js or Playwright bump, check the `backend` annotation of the

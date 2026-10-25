@@ -2,7 +2,7 @@
 
 [React Three Fiber](https://r3f.docs.pmnd.rs) + [drei](https://drei.docs.pmnd.rs),
 bundled with [Vite](https://vite.dev). It is the
-[live example](https://whidrubeld.github.io/three-map-terrain/) on GitHub
+[live example](https://whidrubeld.github.io/three-map-terrain/examples/react/) on GitHub
 Pages — a small tool: pick an area anywhere, style it, export a model. For
 a full app built with the library see
 [GPX Terrain](https://github.com/whidrubeld/gpx-terrain).
