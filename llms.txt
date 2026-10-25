@@ -1,0 +1,32 @@
+# three-map-terrain
+
+> Real-world 3D terrain for three.js from any map tiles — with buildings, roads and bridges, water and vegetation, and a frame for your own layers.
+
+## Documentation Sets
+
+- [Complete documentation](https://whidrubeld.github.io/three-map-terrain/llms-full.txt): every page of the three-map-terrain documentation as Markdown
+
+## Documentation
+
+- [Real-world 3D terrain for three.js](https://whidrubeld.github.io/three-map-terrain/index.md): Real-world 3D terrain for three.js from any map tiles — with buildings, roads and bridges, water and vegetation, and a frame for your own layers.
+- [Getting started](https://whidrubeld.github.io/three-map-terrain/getting-started.md): Install three-map-terrain, put real-world terrain in a three.js scene, find positions on it and use it with React Three Fiber.
+- [Layers](https://whidrubeld.github.io/three-map-terrain/layers.md): Buildings, roads and bridges, water, vegetation and a diorama base on the terrain — added to a map, picked and highlighted, drawn a few tiles at a time.
+- [Buildings](https://whidrubeld.github.io/three-map-terrain/layers/buildings.md): OpenStreetMap buildings standing on the terrain — grounded on slopes, drawn once and whole, joined across vector tiles, cut at the grid's edge.
+- [Roads and bridges](https://whidrubeld.github.io/three-map-terrain/layers/roads.md): Roads and railways lying exactly on the terrain, widths by kind, bridges as decks on piers spanning valleys and joined across tiles, tunnels left out.
+- [Water](https://whidrubeld.github.io/three-map-terrain/layers/water.md): Lakes, the sea, rivers and ponds lying on the terrain with their islands left land, and waterways as ribbons as wide as their kind.
+- [Vegetation](https://whidrubeld.github.io/three-map-terrain/layers/vegetation.md): Woods filled with trees and scrub with bushes (instanced), single trees and bushes, kept clear of water, roads and houses — or what you plant.
+- [Diorama base](https://whidrubeld.github.io/three-map-terrain/layers/base.md): TerrainBase closes the terrain into a solid block — side walls and a bottom — for a cut-out of the world and a closed model to print.
+- [Your own layers](https://whidrubeld.github.io/three-map-terrain/own-layers.md): FeatureLayer loads the tiles of any source and keeps your geometry in step with the terrain; TileContext drapes, extrudes and places models on it.
+- [Materials](https://whidrubeld.github.io/three-map-terrain/materials.md): The look shared by the terrain and its layers, a process for the imagery's pixels, your own terrain material and a material per layer part — changed at runtime.
+- [Sources](https://whidrubeld.github.io/three-map-terrain/sources.md): Imagery, elevation and the layers' features from presets, URL templates, TileJSON, vector tiles, Overpass or your own load — with fallback to ancestors and retries.
+- [Export](https://whidrubeld.github.io/three-map-terrain/export.md): The terrain with its imagery and every layer as GLB, glTF, OBJ, STL or USDZ, in meters — a solid block to 3D print with a TerrainBase.
+- [Large areas](https://whidrubeld.github.io/three-map-terrain/large-areas.md): Any rectangle of tiles, streaming tiles around the camera with removeTileSegment, and levels of detail with alignTo and skirts — the policy yours.
+- [Performance](https://whidrubeld.github.io/three-map-terrain/performance.md): What a scene costs and the knobs that trade it — terrain triangles, imagery detail, layers hidden by distance, fewer features, lines, lights.
+- [Examples](https://whidrubeld.github.io/three-map-terrain/examples.md): The live example in React Three Fiber, the basic example in plain three.js with Overture buildings, and GPX Terrain, a full app built with the library.
+- [LLMs](https://whidrubeld.github.io/three-map-terrain/llms.md): The documentation for AI assistants — every page as Markdown, llms.txt and llms-full.txt, Copy page and Open in Claude or ChatGPT, the type declarations of your version.
+- [Agent skill](https://whidrubeld.github.io/three-map-terrain/skill.md): A skill that teaches coding agents — Claude Code, Codex, Cursor and others — the library, installed with npx skills from GitHub, or from the npm package so that it matches your version.
+- [Lower-level exports](https://whidrubeld.github.io/three-map-terrain/api/exports.md): Tile math, the Tile class, textures, the drawing builders, schema readers of every layer, the MVT decoder and the model exporter.
+- [Layer members](https://whidrubeld.github.io/three-map-terrain/api/layers.md): The members every layer shares — pick, highlight, setMaterial, maxDistance, the ground it covers — and new FeatureLayer(), the frame of them all.
+- [Map](https://whidrubeld.github.io/three-map-terrain/api/map.md): new Map() — its props, MapOptions and material options — and its members, from init() and positions to layers, export, streaming and clean().
+- [Source classes](https://whidrubeld.github.io/three-map-terrain/api/sources.md): Source, ElevationSource, the layers' feature sources, VectorTiles and Overpass — the classes behind the props of every source.
+- [Data and attribution](https://whidrubeld.github.io/three-map-terrain/attribution.md): The credits and terms of the elevation, imagery and OpenStreetMap data the presets use — show map.attributions with the map.
