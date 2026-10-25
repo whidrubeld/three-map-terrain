@@ -80,7 +80,7 @@ examples/basic            plain three.js + webpack: San Francisco, Overture
                           buildings via a custom PMTiles source, OpenFreeMap roads,
                           imagery toned with a `process`
 examples/react            React Three Fiber + drei + Vite; the live example
-                          (GitHub Pages, deployed from master), a small tool:
+                          (on the site at /examples/react/), a small tool:
                           areas (`grid`: columns × rows) picked on an
                           OpenStreetMap map (Picker.tsx: OpenLayers, lazy; edges
                           dragged with its Extent; Photon search) or presets (Lausanne,
@@ -89,9 +89,18 @@ examples/react            React Three Fiber + drei + Vite; the live example
                           materials per part), export;
                           the view lives in the URL (view.ts: place or lat/lon/
                           z/w/h, ex, look, imagery, layers, pick). No Leaflet
-docs/                     README images (WebP) of the examples: `yarn screenshots`
-scripts/screenshots.mjs   renders them from the built examples (Chrome + cwebp)
-.skills/                  agent skills (symlinked as .claude/skills)
+docs/                     the documentation (GitHub Pages): Astro Starlight, its own
+                          package; see "Documentation" below
+  src/content/docs/       the pages, Markdown (`.mdx` where a demo is)
+  src/demos/              live demos: `stage.ts` (renderer, camera, overlay) and
+                          one file per demo, shown as the page's code
+  public/images/          README and docs images, demo posters (WebP)
+scripts/screenshots.mjs   renders the images: README's from the built examples,
+                          demo posters from the built docs (Chrome + cwebp)
+skills/three-map-terrain  the users' agent skill (SKILL.md): `npx skills add
+                          whidrubeld/three-map-terrain`, shipped in the npm package
+.skills/                  contributor skills (symlinked as .claude/skills),
+                          `metadata.internal` so `npx skills` hides them
 ```
 
 ## Commands (Yarn classic 1.x, Node 24)
@@ -110,11 +119,13 @@ yarn validate        # typecheck + lint + format:check + test + build
 
 Do **not** name a script `check`: `yarn check` is a built-in Yarn 1 command.
 
-The examples have their own `package.json`/`yarn.lock` and link the library
-with `link:../..` — run `yarn build` in the root before installing/building them.
+The examples and `docs/` have their own `package.json`/`yarn.lock` and link
+the library (`link:../..`, `link:..`) — run `yarn build` in the root before
+installing/building them. In `docs/`: `yarn dev` (http://localhost:4321/three-map-terrain/),
+`yarn build` (`astro check`, pages, `.md` twins, llms.txt, link validation).
 
 The full app built with the library — **GPX Terrain**, a GPX viewer and the
-library's showcase (README hero image) — lives in its own repository,
+library's showcase and the source of the docs' look — lives in its own repository,
 [whidrubeld/gpx-terrain](https://github.com/whidrubeld/gpx-terrain), and
 depends on the published package. After a release, bump it there.
 
@@ -226,7 +237,7 @@ depends on the published package. After a release, bump it there.
   Results that arrive after disposal are discarded. The shared placeholder
   material is never disposed. `Map.whenReady()` waits for the grid, tiles
   loaded since, textures (`Tile.whenTextured`) and layers' `whenReady`.
-- **Large areas** (README "Large areas"): the library gives the pieces, the
+- **Large areas** (docs page "Large areas"): the library gives the pieces, the
   policy (which tiles, how detailed) is the user's — no quadtree in the core.
   - `alignTo(other)` sets `terrain`'s transform from both maps' `frame()`
     (the origin on the Web Mercator square and the units per square width:
@@ -470,6 +481,71 @@ spot, feature, { tree, bush })` what grows there — `tree(height?)`,
   three's exporter, imported dynamically (`three/addons/exporters/*`, kept
   external). `map.export` waits for `whenReady()` first.
 
+## Documentation (`docs/`)
+
+The user documentation is the site, <https://whidrubeld.github.io/three-map-terrain/>;
+the README is its storefront (features, install, quick start, links).
+
+- **Pages** (`docs/src/content/docs/`): one topic each, Markdown with a
+  `title` and a `description` (the description is the page's line in
+  `llms.txt`). The guide explains, a layer's page ends with its options
+  table, `api/` is the reference, `llms` and `skill` are for AI
+  assistants (`skill.mdx` shows `skills/three-map-terrain/SKILL.md`
+  itself). The sidebar and the order of `llms.txt` are in
+  `astro.config.mjs` (`LAYERS`, `GUIDE`): a new page goes there.
+- **Markdown** runs on Astro 7's Sätteri processor; `src/table-labels.mjs`
+  (a hast plugin) gives table cells their column's name (`data-label`), so
+  a row stacks into a labelled card on a phone. Starlight adds its own
+  plugins to the same processor; unified `rehypePlugins` would need
+  `@astrojs/markdown-remark` — don't. Rendered `.md` pages are cached by
+  the content layer: `yarn dev` runs `astro dev --force` (a fresh cache,
+  and it replaces a dev server already running) — restart it after
+  changing `expressiveCode` or the Markdown pipeline.
+- **Links** between pages are absolute with the base,
+  `/three-map-terrain/materials/#anchor`; `starlight-links-validator`
+  fails the build on a dead page or anchor. The examples are apps of
+  their own under `/three-map-terrain/examples/{react,basic}/` (excluded
+  from validation); files in the repo are GitHub URLs.
+- **Demos**: `<Demo name='lausanne' title='…' />` in an `.mdx` page runs
+  `src/demos/lausanne.ts` on a click and shows the same file as the code
+  below it — one source, type-checked by `astro check`. A demo is a
+  `Demo`: `({ scene, camera, controls, onClick, status, choose }) => Map`,
+  library code only; `stage.ts` holds the renderer (transparent, over the
+  frame's dot matrix), controls, lights, overlay and credits. One demo
+  runs at a time per page (`demo-player.ts`: WebGL contexts, tile
+  servers), drawn only while on screen; leaving it removes the layers and
+  `clean()`s the map. A frame narrower than 16:10 (square on a phone)
+  widens the camera's field of view to see as wide. Posters: `node scripts/screenshots.mjs demo-<name>`
+  after building the docs writes `public/images/demo-<name>.webp`, used
+  when present. Demos read public tile servers: vector tiles and
+  imagery, never Overpass.
+- **For LLMs** (`starlight-llm-actions`): every page has a `.md` twin
+  (Copy page, Open in Claude/ChatGPT, `<link rel="alternate">`),
+  `llms.txt` and `llms-full.txt`. The Markdown is the rendered page
+  flattened (`src/markdown.ts` wraps the plugin's `simple` renderer and
+  undoes Expressive Code's doubled blank lines): components become their
+  text, a demo becomes its code (`data-mdast="ignore"` drops the player).
+- **The agent skill** (`skills/three-map-terrain/SKILL.md`, for users'
+  agents): the model, recipes, pitfalls, and pointers to the installed
+  `dist/index.d.ts` and the docs' `.md` pages. Keep it short and true —
+  a change it describes (a default, an option, a pitfall) updates it.
+  `npx skills add ./ --list` (the `skills` CLI) must list it and only it.
+- **Look**: GPX Terrain's — black and white, square, JetBrains Mono for
+  labels and code, Doto for titles, Geist for prose, a dot matrix, pixel
+  corner brackets (`.ticks`), dotted rules (`.rule`), HUD labels (`.hud`).
+  `src/styles/theme.css` overrides Starlight (its styles are in cascade
+  layers, so unlayered rules win); `demo.css` the demos. Keep new styling
+  in these tokens (`--bg`, `--fg`, `--muted`, `--line`, `--line-strong`,
+  `--panel`), both themes, and check phone widths. The fonts are their
+  latin files, preloaded with `font-display: block` (`src/components/Head.astro`):
+  no fallback shows between pages. The home page has the logo in its hero,
+  not in the header.
+- **Deploy** (`gh-pages.yml`, from master): the library, `docs/` built at
+  the root, both examples built and copied into `docs/dist/examples/`.
+  `public/.nojekyll` keeps GitHub Pages from hiding `_astro/`. The home
+  page sends old live-example links (`/?place=…`) on to
+  `/examples/react/`. CI builds the docs on every push.
+
 ## Conventions
 
 - TypeScript `strict`, ESM source, no runtime dependencies. `three` is a
@@ -478,14 +554,17 @@ spot, feature, { tree, bush })` what grows there — `tree(height?)`,
 - Use TS `private`, not `#private` — consumers may wrap instances in proxies
   (Vue `reactive`, MobX), which breaks `#` fields.
 - The library has no users yet: renames and removals may land in a minor
-  (3.5 renamed `Trees` to `Vegetation`), and the README keeps no upgrade
-  notes. Once it has users, keep the public API backwards compatible within
+  (3.5 renamed `Trees` to `Vegetation`), and neither the docs nor the
+  README keep upgrade notes. Once it has users, keep the public API backwards compatible within
   a major.
   `FeatureLayer` is beta: its protected API may still grow.
 - Prettier: no semicolons, single quotes, no trailing commas. Don't hand-format;
   run `yarn format`.
 - Every behaviour change needs a unit test; rendering changes need the e2e
-  test (and a visual check, see `.skills/verify-rendering`).
+  test (and a visual check, see `.skills/verify-rendering`). A change of
+  the public API or of what users see updates its docs page (and a demo
+  using it, and the agent skill if it covers it); the README changes only
+  if the features or the quick start do.
 - Unit tests mock `src/io/image` (network/canvas) and
   `loadTextureGrid` (`src/terrain/texture`, no canvas in Node), or
   `src/io/fetch` for vector tiles;
@@ -526,7 +605,7 @@ Texture`, then device lost — even for a plain box). The e2e tests then run
 
 ## Skills (`.skills/`)
 
-- `upgrade-dependencies` — bump packages in all three roots, handle couplings
+- `upgrade-dependencies` — bump packages in all four roots, handle couplings
   and three.js migrations, verify.
 - `verify-rendering` — check the real rendering in a browser (WebGL/WebGPU).
 - `release` — version bump, verification, GitHub release → npm publish.

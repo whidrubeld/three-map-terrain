@@ -1,0 +1,62 @@
+---
+title: Agent skill
+description: A skill that teaches coding agents — Claude Code, Codex, Cursor and others — the library, installed with npx skills from GitHub, or from the npm package so that it matches your version.
+---
+
+import { Code } from '@astrojs/starlight/components'
+import skill from '../../../../skills/three-map-terrain/SKILL.md?raw'
+
+An [agent skill](https://agentskills.io) is a `SKILL.md` a coding agent loads when a task needs it — here, code importing `three-map-terrain`, a real place to show on terrain, a model to print. The skill holds the library's essentials:
+
+- **The model** — the grid of tiles, Z up, units and true scale, local coordinates, the lifecycle (`init`, `whenReady`, `clean`).
+- **Recipes** — three.js and React Three Fiber, positions and picking, a city with its layers, sources, materials, a layer of your own, export, large areas, performance.
+- **Pitfalls** — what makes terrain black, invisible or squashed, layers empty, credits missing.
+- **Where to read more** — the type declarations of the installed version, and [these pages as Markdown](/three-map-terrain/llms/).
+
+## Install
+
+With the [`skills`](https://github.com/vercel-labs/skills) CLI, from this repository — it asks which agents to install it for:
+
+```bash
+npx skills add whidrubeld/three-map-terrain
+```
+
+Or for one agent, in every project:
+
+```bash
+npx skills add whidrubeld/three-map-terrain \
+  --skill three-map-terrain -a claude-code -g
+```
+
+`npx skills update` brings it up to date, `npx skills remove three-map-terrain` takes it away.
+
+## From the npm package
+
+The package ships the skill too (from the release after 3.5.1): linked from `node_modules`, it matches the version you installed and updates with it. The `skills` CLI's sync is experimental:
+
+```bash
+npm install -D skills
+npx skills experimental_sync -y
+```
+
+A `prepare` script — `"prepare": "skills experimental_sync -y"` — keeps it linked after every install.
+
+## Without installing
+
+```bash
+npx skills use whidrubeld/three-map-terrain@three-map-terrain \
+  --agent claude-code
+```
+
+starts the agent with the skill; without `--agent` it prints the prompt.
+
+## The skill
+
+[`skills/three-map-terrain/SKILL.md`](https://github.com/whidrubeld/three-map-terrain/blob/master/skills/three-map-terrain/SKILL.md), as installed:
+
+<details>
+<summary>Show the skill</summary>
+
+<Code code={skill} lang='md' title='SKILL.md' />
+
+</details>

@@ -1,0 +1,226 @@
+/* Demos: a head with their state, a frame (a poster and a button, then the
+   scene over the dot matrix), the code below */
+
+demo-player {
+  display: block;
+  margin-block: 2rem 0.75rem;
+}
+
+.demo-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.demo-head .demo-title {
+  overflow: hidden;
+  color: var(--fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-state {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.demo-state::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--muted);
+}
+
+.demo-state::after {
+  content: 'Idle';
+}
+
+demo-player[data-state='loading'] .demo-state::before {
+  border-color: var(--fg);
+  animation: demo-blink 0.6s steps(1, end) infinite;
+}
+
+demo-player[data-state='loading'] .demo-state::after {
+  content: 'Loading';
+}
+
+demo-player[data-state='running'] .demo-state {
+  color: var(--fg);
+}
+
+demo-player[data-state='running'] .demo-state::before {
+  border-color: var(--fg);
+  background: var(--fg);
+}
+
+demo-player[data-state='running'] .demo-state::after {
+  content: 'Live';
+}
+
+@keyframes demo-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.demo-frame {
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-family: var(--__sl-font-mono);
+}
+
+@media (max-width: 40rem) {
+  .demo-frame {
+    aspect-ratio: 1;
+  }
+
+  .demo-credits {
+    max-width: 100%;
+    font-size: 0.5625rem;
+  }
+}
+
+/* the ticks stay outside the scene */
+.demo-frame.ticks {
+  overflow: visible;
+}
+
+.demo-frame canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  touch-action: none;
+}
+
+.demo-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* a square frame on a phone: as the scene, higher */
+  opacity: 0.7;
+}
+
+.demo-run {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.demo-run > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.5rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+  font-family: var(--__sl-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.demo-run:hover > span,
+.demo-run:focus-visible > span {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+demo-player[data-state] .demo-run {
+  cursor: progress;
+}
+
+demo-player[data-state='running'] .demo-poster,
+demo-player[data-state='running'] .demo-run {
+  display: none;
+}
+
+.demo-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.demo-status,
+.demo-credits {
+  position: absolute;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.demo-status {
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-credits {
+  right: -1px;
+  bottom: -1px;
+  max-width: calc(100% - 2rem);
+  padding: 0.2rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  line-height: 1.5;
+}
+
+.demo-credits:empty {
+  display: none;
+}
+
+.demo-choices {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  pointer-events: auto;
+}
+
+.demo-choices button {
+  height: 1.75rem;
+  margin-inline-start: -1px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.demo-choices button:hover,
+.demo-choices button[aria-pressed='true'] {
+  position: relative;
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* the code right under its demo */
+demo-player + .expressive-code {
+  margin-top: 0;
+}

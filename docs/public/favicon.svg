@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.5 -3.5 16 16" shape-rendering="crispEdges">
+  <style>
+    rect { fill: #0a0a0a } path { fill: #f4f4f4 }
+    @media (prefers-color-scheme: light) { rect { fill: #f4f4f4 } path { fill: #0a0a0a } }
+  </style>
+  <rect x="-0.5" y="-3.5" width="16" height="16" />
+  <path d="M5 0h1v1h-1zM4 1h3v1h-3zM10 1h1v1h-1zM3 2h5v1h-5zM9 2h3v1h-3zM2 3h11v1h-11zM1 4h13v1h-13zM0 5h15v1h-15zM0 7h15v2h-15z" />
+</svg>

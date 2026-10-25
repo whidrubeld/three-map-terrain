@@ -372,6 +372,9 @@ export default function App() {
                 </p>
                 <p className='muted'>Drag to pan, right-drag to rotate.</p>
                 <nav>
+                  <a href='https://whidrubeld.github.io/three-map-terrain/'>
+                    Docs
+                  </a>
                   <a href='https://github.com/whidrubeld/three-map-terrain'>
                     GitHub
                   </a>

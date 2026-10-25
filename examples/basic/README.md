@@ -1,7 +1,8 @@
 # three-map-terrain · basic example
 
 Plain [three.js](https://threejs.org), bundled with webpack: downtown
-**San Francisco** at zoom 15, true to scale.
+**San Francisco** at zoom 15, true to scale —
+[live on GitHub Pages](https://whidrubeld.github.io/three-map-terrain/examples/basic/).
 
 What it shows ([src/index.ts](src/index.ts)):
 
