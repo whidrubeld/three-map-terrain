@@ -18,27 +18,21 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: yarn
-          cache-dependency-path: |
-            yarn.lock
-            docs/yarn.lock
-            examples/react/yarn.lock
-            examples/basic/yarn.lock
+          cache: pnpm
 
+      # the library, the docs and the examples are one pnpm workspace
       - name: Build package
         run: |
-          yarn install --frozen-lockfile
-          yarn build
+          pnpm install --frozen-lockfile
+          pnpm build
 
       # the documentation, at the root of the site
       - name: Build docs
-        working-directory: docs
-        run: |
-          yarn install --frozen-lockfile
-          yarn build
+        run: pnpm --dir docs build
 
       # the examples under /examples/: the live example (examples/react) and
       # the basic one. The full app built with the library, GPX Terrain,
@@ -46,7 +40,7 @@ jobs:
       - name: Build examples
         run: |
           for example in react basic; do
-            (cd examples/$example && yarn install --frozen-lockfile && yarn build)
+            pnpm --dir examples/$example build
             cp -R examples/$example/dist docs/dist/examples/$example
           done
 

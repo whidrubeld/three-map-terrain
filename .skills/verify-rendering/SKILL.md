@@ -7,14 +7,14 @@ metadata:
 
 # Verify rendering
 
-Unit tests run in Node without WebGL; `yarn test:e2e` renders in Chromium but
+Unit tests run in Node without WebGL; `pnpm test:e2e` renders in Chromium but
 with synthetic tiles. This skill covers the remaining gap: **real data, real
 look**.
 
 ## 1. Automated baseline
 
 ```bash
-yarn test:e2e
+pnpm test:e2e
 ```
 
 It runs `e2e/render.spec.ts` against the playground for `renderer=webgl` and
@@ -60,7 +60,7 @@ WebGPU locally, run the tests against Chrome (`channel: 'chrome'`).
 ## 2. Playground with real tiles
 
 ```bash
-yarn dev    # vite playground → http://localhost:5173
+pnpm dev    # vite playground → http://localhost:5173
 ```
 
 Query parameters:
@@ -156,12 +156,12 @@ using `MeshLambertMaterial` whose `map` is a 512×512 `CanvasTexture`.
 ## 3. Examples
 
 ```bash
-yarn build                                  # examples use dist/
-(cd examples/basic && yarn start)           # webpack-dev-server, port 8080
-(cd examples/react && yarn dev)             # vite, port 5173 (the live example)
+pnpm build                       # examples use dist/
+pnpm --dir examples/basic start  # webpack-dev-server, port 8080
+pnpm --dir examples/react dev    # vite, port 5173 (the live example)
 ```
 
-The docs' demos: `yarn build`, then `(cd docs && yarn dev)` (port 4321,
+The docs' demos: `pnpm build`, then `pnpm --dir docs dev` (port 4321,
 `/three-map-terrain/`): Getting started, Layers, Your own layers and
 Materials each have one — **Run the demo**, wait for the tiles, click in it
 (status line), switch the looks on Materials, in both themes.
@@ -193,7 +193,8 @@ errors about aborted requests.
 The heaviest user of the library is the GPX Terrain app
 ([whidrubeld/gpx-terrain](https://github.com/whidrubeld/gpx-terrain)): for
 changes to positions, picking or materials, also run it against the local
-build (`yarn link` here, `yarn link three-map-terrain` there) with its
+build (linked with its package manager, e.g. `pnpm link ../three-map-terrain`
+there) with its
 `verify-app` skill.
 
 ## 4. Report

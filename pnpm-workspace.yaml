@@ -1,0 +1,5 @@
+# The library is the root; docs/ and the examples use its build (dist/)
+# through `workspace:*`
+packages:
+  - docs
+  - examples/*

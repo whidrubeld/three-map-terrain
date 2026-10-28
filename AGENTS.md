@@ -75,7 +75,7 @@ src/                      library (the only published code, plus dist/)
 test/                     Vitest unit tests (Node, no WebGL), mirroring src/;
                           test/support: fakes, terrarium + MVT encoders
 e2e/                      Playwright tests against playground/ with mocked tile servers
-playground/               `yarn dev` app; query params documented in .skills/verify-rendering
+playground/               `pnpm dev` app; query params documented in .skills/verify-rendering
 examples/basic            plain three.js + webpack: San Francisco, Overture
                           buildings via a custom PMTiles source, OpenFreeMap roads,
                           imagery toned with a `process`
@@ -103,26 +103,28 @@ skills/three-map-terrain  the users' agent skill (SKILL.md): `npx skills add
                           `metadata.internal` so `npx skills` hides them
 ```
 
-## Commands (Yarn classic 1.x, Node 24)
+## Commands (pnpm 12, Node 24)
 
 ```bash
-yarn                 # install
-yarn dev             # playground on http://localhost:5173
-yarn typecheck       # tsc --noEmit over src, test, e2e, playground, configs
-yarn lint            # eslint (typescript-eslint strictTypeChecked + stylistic)
-yarn format          # prettier --write   (format:check in CI)
-yarn test            # vitest unit tests  (test:watch, test:coverage)
-yarn test:e2e        # playwright; first time: yarn playwright install chromium
-yarn build           # vite lib build (dist/index.mjs + index.js) + tsc declarations
-yarn validate        # typecheck + lint + format:check + test + build
+pnpm install         # the whole workspace: library, docs/, examples/*
+pnpm dev             # playground on http://localhost:5173
+pnpm typecheck       # tsc --noEmit over src, test, e2e, playground, configs
+pnpm lint            # eslint (typescript-eslint strictTypeChecked + stylistic)
+pnpm format          # prettier --write   (format:check in CI)
+pnpm test            # vitest unit tests  (test:watch, test:coverage)
+pnpm test:e2e        # playwright; first time: pnpm exec playwright install chromium
+pnpm build           # vite lib build (dist/index.mjs + index.js) + tsc declarations
+pnpm validate        # typecheck + lint + format:check + test + build
 ```
 
-Do **not** name a script `check`: `yarn check` is a built-in Yarn 1 command.
-
-The examples and `docs/` have their own `package.json`/`yarn.lock` and link
-the library (`link:../..`, `link:..`) — run `yarn build` in the root before
-installing/building them. In `docs/`: `yarn dev` (http://localhost:4321/three-map-terrain/),
-`yarn build` (`astro check`, pages, `.md` twins, llms.txt, link validation).
+One pnpm workspace (`pnpm-workspace.yaml`), one `pnpm-lock.yaml`: the root
+is the library, `docs/` and `examples/*` are packages that depend on it as
+`three-map-terrain: workspace:*` and use its `dist/` — run `pnpm build` in
+the root before building them. pnpm is pinned by `packageManager`. In
+`docs/`: `pnpm dev` (http://localhost:4321/three-map-terrain/), `pnpm build`
+(`astro check`, pages, `.md` twins, llms.txt, link validation); from the
+root, `pnpm --dir docs build`. Dependencies with build scripts need an
+`allowBuilds` entry in `pnpm-workspace.yaml` (none do yet).
 
 The full app built with the library — **GPX Terrain**, a GPX viewer and the
 library's showcase and the source of the docs' look — lives in its own repository,
@@ -501,7 +503,7 @@ the README is its storefront (features, install, quick start, links).
   a row stacks into a labelled card on a phone. Starlight adds its own
   plugins to the same processor; unified `rehypePlugins` would need
   `@astrojs/markdown-remark` — don't. Rendered `.md` pages are cached by
-  the content layer: `yarn dev` runs `astro dev --force` (a fresh cache,
+  the content layer: `pnpm dev` runs `astro dev --force` (a fresh cache,
   and it replaces a dev server already running) — restart it after
   changing `expressiveCode` or the Markdown pipeline.
 - **Links** between pages are absolute with the base,
@@ -562,7 +564,7 @@ the README is its storefront (features, install, quick start, links).
   a major.
   `FeatureLayer` is beta: its protected API may still grow.
 - Prettier: no semicolons, single quotes, no trailing commas. Don't hand-format;
-  run `yarn format`.
+  run `pnpm format`.
 - Every behaviour change needs a unit test; rendering changes need the e2e
   test (and a visual check, see `.skills/verify-rendering`). A change of
   the public API or of what users see updates its docs page (and a demo
@@ -587,8 +589,11 @@ the README is its storefront (features, install, quick start, links).
 
 ## Version constraints (as of three r186)
 
-- **TypeScript is pinned to `~6.0`**: typescript-eslint's peer range is
-  `<6.1.0`, and TypeScript 7 (native compiler) has no JS compiler API yet.
+- **TypeScript is pinned to `~6.0`**: TypeScript 7 (the native compiler)
+  ships no JS compiler API, only `typescript/unstable/*`, and the tools
+  built on it don't take it — typescript-eslint's peer range is `<6.1.0`,
+  `@astrojs/check`'s `^5 || ^6`, ts-loader (examples/basic) calls the API.
+  `tsc --noEmit` takes ~2 s here: TS 7 would gain little until they move.
 - `three` and `@types/three` must share the same minor in every package root.
 - React stays `<19.4` — `@react-three/fiber` 9.x peer range.
 - `peerDependencies.three` is `>=0.152.0` (needs `Texture.colorSpace`).
@@ -602,7 +607,7 @@ Texture`, then device lost — even for a plain box). The e2e tests then run
 
 - **playwright** — drive the playground/examples, read console, take screenshots.
 - **threejs-devtools** — inspect the live scene graph/materials of the dev
-  server (`DEV_PORT=5173`, i.e. `yarn dev`). Community package.
+  server (`DEV_PORT=5173`, i.e. `pnpm dev`). Community package.
 - **context7** — up-to-date docs for three.js, R3F, Vite, Vitest etc.
   Optional `CONTEXT7_API_KEY` env var raises rate limits.
 

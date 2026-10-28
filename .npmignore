@@ -1,7 +1,8 @@
 /.github
 /.vscode
 /.zed
-/.yarn
+/pnpm-lock.yaml
+/pnpm-workspace.yaml
 /.editorconfig
 /.eslintrc
 /.prettierrc

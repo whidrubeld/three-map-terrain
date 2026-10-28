@@ -8,7 +8,7 @@ metadata:
 # Release
 
 Publishing is automated: publishing a **GitHub release** runs
-`.github/workflows/publish-package.yml` (`yarn validate` → `npm publish --provenance`).
+`.github/workflows/publish-package.yml` (`pnpm validate` → `npm publish --provenance`).
 Never run `npm publish` locally.
 
 There is no npm token. npm **trusted publishing** authorizes that workflow by
@@ -34,11 +34,11 @@ The public API is everything exported from `src/index.ts`.
 1. `package.json` → `version`.
 2. The docs (`docs/src/content/docs/`) for any changed API, install/peer
    notes; `README.md` if the features or the quick start changed.
-3. `yarn validate && yarn test:e2e`, then build both examples and the docs
+3. `pnpm validate && pnpm test:e2e`, then build both examples and the docs
    (see the `upgrade-dependencies` skill, step 5).
 4. If the examples or the demos look different, refresh the images:
-   `yarn screenshots` (Google Chrome for GPU rendering, `cwebp`; 1280×800
-   at 2×; `yarn screenshots demo-alps …` for some) and look at
+   `pnpm screenshots` (Google Chrome for GPU rendering, `cwebp`; 1280×800
+   at 2×; `pnpm screenshots demo-alps …` for some) and look at
    `docs/public/images/*.webp`.
 5. Check the package contents: `npm pack --dry-run` — only `dist/`,
    `src/` and `skills/` (with their folders), `README.md`, `LICENSE`,
