@@ -383,7 +383,10 @@ depends on the published package. After a release, bump it there.
   - `ctx.extrude` into `walls` (UV: meters along, up), `roofs`, `floors`
     (UV: map meters) and `edges` (lines with `edges` or in wireframe; faces
     then get a polygon offset). Edges are the look's color × 0.62 (solid)
-    or the color (wireframe).
+    or the color (wireframe). They begin at the ground (`ground` of
+    `extrude`): corners from it up; the bottom outline only in wireframe,
+    along it at every crossing of the terrain's triangles (over solid
+    terrain it would flicker) — so a wireframe change redraws (`redrawsOn`).
   - MVT decoding is our own (`io/mvt.ts`, checked against
     `@mapbox/vector-tile` on real tiles); int64 values are read in halves.
 - **Roads** (`src/layers/roads/`):

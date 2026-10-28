@@ -794,9 +794,96 @@ describe('Buildings', () => {
 
     expect(roofs.material.visible).toBe(false)
     expect((edges.material as LineBasicMaterial).visible).toBe(true)
-    // a box: 4 walls × (top, bottom, corner) segments
-    expect(edges.geometry.getAttribute('position').count).toBe(4 * 3 * 2)
+    // a box: 4 walls × (top, corner) segments, the bottom along the ground
+    // in pieces (it crosses the terrain's diagonals)
+    expect(edges.geometry.getAttribute('position').count).toBeGreaterThan(
+      4 * 3 * 2
+    )
     expect(layer.pick(rayDown(map, 0.325, 0.325))?.feature).toBe(building)
+  })
+
+  /** The edges' segments, `[a, b]` in the center tile's local coordinates. */
+  const edgeSegments = (layer: Buildings) => {
+    const [edges] = part<LineSegments>(layer, 'edges')
+    const position = edges.geometry.getAttribute('position')
+    const out: [Vector3, Vector3][] = []
+    for (let i = 0; i < position.count; i += 2) {
+      out.push([
+        new Vector3().fromBufferAttribute(position, i),
+        new Vector3().fromBufferAttribute(position, i + 1)
+      ])
+    }
+    return out
+  }
+
+  /** The terrain under a local point of the center tile. */
+  const groundUnder = (map: Map, point: Vector3) => {
+    const { tileSize } = map.options
+    return groundZ(map, point.x / tileSize + 0.5, 0.5 - point.y / tileSize)
+  }
+
+  it('outlines a building in wireframe where it leaves the ground, not below', async () => {
+    // bumpy: a line straight between two points misses the ground between
+    // them unless they are where it bends
+    loadImageData.mockImplementation((url: string) => {
+      const { x, y } = tileFromUrl(url)
+      return Promise.resolve(
+        terrariumPixels(SIZE, (px, py) => {
+          const [gx, gy] = [x * SIZE + px, y * SIZE + py]
+          return ground(gx, gy) + 6 * ((gx * 3 + gy * 5) % 4)
+        })
+      )
+    })
+    // crossing cells and their diagonals
+    const { map, layer } = await setup(
+      [box(0.2, 0.2, 0.2, { height: 20 })],
+      {},
+      {},
+      { wireframe: true }
+    )
+    const top = bounds(layer).max.z
+    const below = edgeSegments(layer).filter(([a, b]) => a.z < top && b.z < top)
+    const corners = edgeSegments(layer).filter(
+      ([a, b]) => a.x === b.x && a.y === b.y
+    )
+
+    // the bottom outline lies on the ground — its middles too
+    expect(below.length).toBeGreaterThan(4)
+    for (const [a, b] of below) {
+      const middle = a.clone().lerp(b, 0.5)
+      for (const point of [a, b, middle]) {
+        expect(point.z).toBeCloseTo(groundUnder(map, point), 3)
+      }
+    }
+    // the corners rise from the ground, not from the walls' bottom
+    expect(corners).toHaveLength(4)
+    for (const [a] of corners) {
+      expect(a.z).toBeCloseTo(groundUnder(map, a), 3)
+    }
+    expect(bounds(layer).min.z).toBeLessThan(
+      Math.min(...corners.map(([a]) => a.z))
+    )
+  })
+
+  it('leaves the bottom outline out over the solid terrain, and draws it in wireframe', async () => {
+    const { map, layer } = await setup([box(0.2, 0.2, 0.2, { height: 20 })], {
+      edges: true
+    })
+    // 4 walls × (top, corner): nothing below the ground to flicker in it
+    expect(edgeSegments(layer)).toHaveLength(8)
+    for (const [a, b] of edgeSegments(layer)) {
+      for (const point of [a, b]) {
+        expect(point.z).toBeGreaterThanOrEqual(groundUnder(map, point) - 1e-3)
+      }
+    }
+
+    map.setMaterial({ wireframe: true })
+    await layer.whenReady()
+    expect(edgeSegments(layer).length).toBeGreaterThan(8)
+
+    map.setMaterial({ wireframe: false })
+    await layer.whenReady()
+    expect(edgeSegments(layer)).toHaveLength(8)
   })
 
   it('outlines solid buildings with darker edges', async () => {
@@ -833,8 +920,9 @@ describe('Buildings', () => {
       return edges.geometry.getAttribute('position').count / 2
     }
 
-    expect(await segments(16)).toBe(16 * 3)
-    expect(await segments(64)).toBe(64 * 2)
+    // the top of every wall and its corner (the bottom is under the ground)
+    expect(await segments(16)).toBe(16 * 2)
+    expect(await segments(64)).toBe(64)
   })
 
   it('resolves intersections with the edges too', async () => {

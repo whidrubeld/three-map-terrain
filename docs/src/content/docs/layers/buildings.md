@@ -15,7 +15,7 @@ const buildings = map.addLayer(
 - **Once, whole.** A building is drawn by the terrain tile its center lies in, so one crossing a tile border is drawn once and never cut. Vector tiles cut buildings at their borders: the pieces of one (the same stretch of the border from both sides, the same height) are joined again as their tiles load. Sources whose tiles are coarser than the terrain (most stop at zoom 14) are loaded once for the terrain tiles they cover.
 - **Cut at the edge.** With `clip` (default) buildings end with the grid: those crossing its edge are cut along it, and the parts of buildings outside that reach in are drawn — a clean section on a `TerrainBase`.
 - **Data.** Heights, minimum heights and colors come from the source: OSM `height`, `building:levels` (3 m each; of several sections — `9;10`, `9,10` — the highest), `min_height`, `building:colour`; vector tiles with these precomputed. Outlines that have `building:part`s are left to the parts. Buildings without a height get `defaultHeight` — so do those above 1000 m, which no building reaches: a data error.
-- **Parts.** Every tile has a mesh of `walls` (UVs in meters along and up), `roofs`, `floors` and the `edges` (lines, with `edges` or in wireframe) — each can have [its own material](/three-map-terrain/materials/).
+- **Parts.** Every tile has a mesh of `walls` (UVs in meters along and up), `roofs`, `floors` and the `edges` (lines, with `edges` or in wireframe) — each can have [its own material](/three-map-terrain/materials/). The edges begin at the ground, not under it: in wireframe the bottom outline runs along the terrain.
 
 ## `new Buildings({ source, ...options })`
 
