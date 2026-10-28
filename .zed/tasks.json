@@ -1,0 +1,70 @@
+// Zed tasks (`task: spawn`). The library's scripts run in the root; docs/ and
+// the examples link the library's build (dist/), so their tasks build it first.
+[
+  {
+    "label": "install: every package",
+    "command": "yarn && yarn build && yarn --cwd docs && yarn --cwd examples/basic && yarn --cwd examples/react"
+  },
+  { "label": "playground: dev", "command": "yarn dev" },
+  { "label": "typecheck", "command": "yarn typecheck", "save": "all" },
+  { "label": "lint", "command": "yarn lint", "save": "all" },
+  { "label": "format", "command": "yarn format", "save": "all" },
+  { "label": "test", "command": "yarn test", "save": "all" },
+  { "label": "test: watch", "command": "yarn test:watch" },
+  { "label": "test: coverage", "command": "yarn test:coverage", "save": "all" },
+  { "label": "e2e", "command": "yarn test:e2e", "save": "all" },
+  { "label": "build", "command": "yarn build", "save": "all" },
+  { "label": "validate", "command": "yarn validate", "save": "all" },
+  {
+    // test/ is Vitest, e2e/ Playwright: Zed's own test runnables call Vitest for both
+    "label": "test: $ZED_RELATIVE_FILE",
+    "command": "case \"$ZED_RELATIVE_FILE\" in e2e/*) yarn playwright test \"$ZED_RELATIVE_FILE\" ;; *) yarn vitest run \"$ZED_RELATIVE_FILE\" ;; esac",
+    "save": "current"
+  },
+  {
+    "label": "test: $ZED_CUSTOM_TYPESCRIPT_VITEST_TEST_NAME",
+    "command": "case \"$ZED_RELATIVE_FILE\" in e2e/*) yarn playwright test \"$ZED_RELATIVE_FILE\" -g \"$ZED_CUSTOM_TYPESCRIPT_VITEST_TEST_NAME\" ;; *) yarn vitest run \"$ZED_RELATIVE_FILE\" -t \"$ZED_CUSTOM_TYPESCRIPT_VITEST_TEST_NAME\" ;; esac",
+    "save": "current",
+    "tags": ["ts-test", "js-test"]
+  },
+  {
+    "label": "e2e: debug $ZED_RELATIVE_FILE",
+    "command": "yarn playwright test \"$ZED_RELATIVE_FILE\" --debug",
+    "save": "current"
+  },
+  {
+    "label": "screenshots",
+    "command": "yarn screenshots",
+    "save": "all"
+  },
+  {
+    "label": "docs: dev",
+    "command": "yarn build && yarn --cwd docs dev",
+    "save": "all"
+  },
+  {
+    "label": "docs: build",
+    "command": "yarn build && yarn --cwd docs build",
+    "save": "all"
+  },
+  {
+    "label": "examples/basic: start",
+    "command": "yarn build && yarn --cwd examples/basic start",
+    "save": "all"
+  },
+  {
+    "label": "examples/basic: build",
+    "command": "yarn build && yarn --cwd examples/basic build",
+    "save": "all"
+  },
+  {
+    "label": "examples/react: dev",
+    "command": "yarn build && yarn --cwd examples/react dev",
+    "save": "all"
+  },
+  {
+    "label": "examples/react: build",
+    "command": "yarn build && yarn --cwd examples/react build",
+    "save": "all"
+  }
+]
