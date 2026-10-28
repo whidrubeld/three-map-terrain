@@ -64,14 +64,14 @@ What a link leaves out is the area's default — a preset's own, else
 plain, Sentinel-2 and every layer: `?place=lausanne&look=textured`,
 `?lat=27.98808&lon=86.92529&z=12&w=5&h=3&look=textured&layers=water,base`.
 
-`three-map-terrain` is linked from the repository root, so build the library first:
+`three-map-terrain` is the repository root, a package of the same pnpm
+workspace (`workspace:*`), so build the library first:
 
 ```bash
 # repository root
-yarn && yarn build
+pnpm install && pnpm build
 
 # this folder
-yarn
-yarn dev      # http://localhost:5173
-yarn build    # type-check + production build into dist/ (relative paths)
+pnpm dev      # http://localhost:5173
+pnpm build    # type-check + production build into dist/ (relative paths)
 ```

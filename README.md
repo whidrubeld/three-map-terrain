@@ -103,13 +103,13 @@ Show the credits of the data you use — `map.attributions` lists them — and f
 ## Development
 
 ```bash
-yarn            # install
-yarn dev        # playground with hot reload on http://localhost:5173
-yarn validate   # typecheck, lint, format check, unit tests, build
-yarn test:e2e   # rendering tests in Chromium (WebGL + WebGPU), tile servers mocked
+pnpm install    # the library, docs/ and the examples (one pnpm workspace)
+pnpm dev        # playground with hot reload on http://localhost:5173
+pnpm validate   # typecheck, lint, format check, unit tests, build
+pnpm test:e2e   # rendering tests in Chromium (WebGL + WebGPU), tile servers mocked
 ```
 
-The documentation is [`docs/`](docs) — Astro Starlight, its own package: `yarn build` here, then `yarn && yarn dev` there. The playground takes query parameters: `renderer=webgpu` (`&forceWebGL=1` for its WebGL2 backend), `lights=0`, `wireframe=1`, `segments=40`, `nTiles=5`, `grid=0,-1,1,1` (any rectangle, in tiles from the location's), `view=top`, `api=osm|swisstopo|none`, `color=e9e4da`, `gray=1` (a `process`), `elevation=mapterhorn`, `buildings=openfreemap&edges=1`, `roads=openfreemap`, `water=openfreemap`, `vegetation=openfreemap`, `zoom=15&lat=46.515&lon=6.632`, `base=372`, `lod=2&skirt=400` (levels of detail), `stream=1`. Architecture notes and conventions are in [AGENTS.md](AGENTS.md).
+The documentation is [`docs/`](docs) — Astro Starlight, a package of the workspace: `pnpm build` here, then `pnpm dev` there. The playground takes query parameters: `renderer=webgpu` (`&forceWebGL=1` for its WebGL2 backend), `lights=0`, `wireframe=1`, `segments=40`, `nTiles=5`, `grid=0,-1,1,1` (any rectangle, in tiles from the location's), `view=top`, `api=osm|swisstopo|none`, `color=e9e4da`, `gray=1` (a `process`), `elevation=mapterhorn`, `buildings=openfreemap&edges=1`, `roads=openfreemap`, `water=openfreemap`, `vegetation=openfreemap`, `zoom=15&lat=46.515&lon=6.632`, `base=372`, `lod=2&skirt=400` (levels of detail), `stream=1`. Architecture notes and conventions are in [AGENTS.md](AGENTS.md).
 
 ## License
 

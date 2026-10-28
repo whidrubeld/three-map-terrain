@@ -1,0 +1,70 @@
+// Zed tasks (`task: spawn`). The library's scripts run in the root; docs/ and
+// the examples link the library's build (dist/), so their tasks build it first.
+[
+  {
+    "label": "install: the workspace",
+    "command": "pnpm install && pnpm build"
+  },
+  { "label": "playground: dev", "command": "pnpm dev" },
+  { "label": "typecheck", "command": "pnpm typecheck", "save": "all" },
+  { "label": "lint", "command": "pnpm lint", "save": "all" },
+  { "label": "format", "command": "pnpm format", "save": "all" },
+  { "label": "test", "command": "pnpm test", "save": "all" },
+  { "label": "test: watch", "command": "pnpm test:watch" },
+  { "label": "test: coverage", "command": "pnpm test:coverage", "save": "all" },
+  { "label": "e2e", "command": "pnpm test:e2e", "save": "all" },
+  { "label": "build", "command": "pnpm build", "save": "all" },
+  { "label": "validate", "command": "pnpm validate", "save": "all" },
+  {
+    // test/ is Vitest, e2e/ Playwright: Zed's own test runnables call Vitest for both
+    "label": "test: $ZED_RELATIVE_FILE",
+    "command": "case \"$ZED_RELATIVE_FILE\" in e2e/*) pnpm exec playwright test \"$ZED_RELATIVE_FILE\" ;; *) pnpm exec vitest run \"$ZED_RELATIVE_FILE\" ;; esac",
+    "save": "current"
+  },
+  {
+    "label": "test: $ZED_CUSTOM_TYPESCRIPT_VITEST_TEST_NAME",
+    "command": "case \"$ZED_RELATIVE_FILE\" in e2e/*) pnpm exec playwright test \"$ZED_RELATIVE_FILE\" -g \"$ZED_CUSTOM_TYPESCRIPT_VITEST_TEST_NAME\" ;; *) pnpm exec vitest run \"$ZED_RELATIVE_FILE\" -t \"$ZED_CUSTOM_TYPESCRIPT_VITEST_TEST_NAME\" ;; esac",
+    "save": "current",
+    "tags": ["ts-test", "js-test"]
+  },
+  {
+    "label": "e2e: debug $ZED_RELATIVE_FILE",
+    "command": "pnpm exec playwright test \"$ZED_RELATIVE_FILE\" --debug",
+    "save": "current"
+  },
+  {
+    "label": "screenshots",
+    "command": "pnpm screenshots",
+    "save": "all"
+  },
+  {
+    "label": "docs: dev",
+    "command": "pnpm build && pnpm --dir docs dev",
+    "save": "all"
+  },
+  {
+    "label": "docs: build",
+    "command": "pnpm build && pnpm --dir docs build",
+    "save": "all"
+  },
+  {
+    "label": "examples/basic: start",
+    "command": "pnpm build && pnpm --dir examples/basic start",
+    "save": "all"
+  },
+  {
+    "label": "examples/basic: build",
+    "command": "pnpm build && pnpm --dir examples/basic build",
+    "save": "all"
+  },
+  {
+    "label": "examples/react: dev",
+    "command": "pnpm build && pnpm --dir examples/react dev",
+    "save": "all"
+  },
+  {
+    "label": "examples/react: build",
+    "command": "pnpm build && pnpm --dir examples/react build",
+    "save": "all"
+  }
+]

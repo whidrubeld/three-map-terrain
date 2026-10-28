@@ -1,0 +1,49 @@
+// Zed debugger (JavaScript adapter). The browser ones attach to a dev server
+// started by its task (tasks.json) and open Chrome on it.
+[
+  {
+    "label": "Vitest: current file",
+    "adapter": "JavaScript",
+    "type": "pwa-node",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/node_modules/vitest/vitest.mjs",
+    "args": ["run", "$ZED_FILE"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "autoAttachChildProcesses": true,
+    "smartStep": true,
+    "console": "integratedTerminal",
+    "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+  },
+  {
+    "label": "Chrome: playground (task playground: dev)",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "launch",
+    "url": "http://localhost:5173",
+    "webRoot": "$ZED_WORKTREE_ROOT/playground"
+  },
+  {
+    "label": "Chrome: docs (task docs: dev)",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "launch",
+    "url": "http://localhost:4321/three-map-terrain/",
+    "webRoot": "$ZED_WORKTREE_ROOT/docs"
+  },
+  {
+    "label": "Chrome: examples/basic (task examples/basic: start)",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "launch",
+    "url": "http://localhost:8080",
+    "webRoot": "$ZED_WORKTREE_ROOT/examples/basic"
+  },
+  {
+    "label": "Chrome: examples/react (task examples/react: dev)",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "launch",
+    "url": "http://localhost:5173",
+    "webRoot": "$ZED_WORKTREE_ROOT/examples/react"
+  }
+]

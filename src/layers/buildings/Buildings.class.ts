@@ -199,13 +199,18 @@ export class Buildings extends FeatureLayer<BuildingFeature> {
       : color
   }
 
-  /** With `featureColors`, the others' color is in their vertices. */
+  /**
+   * With `featureColors`, the others' color is in their vertices; edges
+   * shown in and out of wireframe draw the bottom outline or leave it out.
+   */
   protected override redrawsOn(previous: Look, next: Look): boolean {
     return (
-      this.options.featureColors &&
-      !new Color(previous.color ?? 0xffffff).equals(
-        new Color(next.color ?? 0xffffff)
-      )
+      (this.options.featureColors &&
+        !new Color(previous.color ?? 0xffffff).equals(
+          new Color(next.color ?? 0xffffff)
+        )) ||
+      (previous.wireframe !== next.wireframe &&
+        this.material('edges', 'lines').visible)
     )
   }
 
@@ -445,7 +450,9 @@ export class Buildings extends FeatureLayer<BuildingFeature> {
   /**
    * Extrudes the buildings, standing on the ground: from 0.5 m below its
    * lowest point under the walls up to their `height` above it, and at
-   * least 3 m above its highest; parts with a `minHeight` float.
+   * least 3 m above its highest; parts with a `minHeight` float. The edges
+   * begin at the ground — in wireframe, where nothing hides what lies
+   * below it, the bottom outline runs along it.
    */
   protected override draw(
     ctx: TileContext<BuildingFeature>,
@@ -514,8 +521,9 @@ export class Buildings extends FeatureLayer<BuildingFeature> {
           )
 
       const color = this.vertexColor(feature, look)
+      const ground = floating ? false : look.wireframe ? 'outline' : true
       ctx.feature(feature, () => {
-        ctx.extrude(polygons, bottom, top, { color, floor: floating })
+        ctx.extrude(polygons, bottom, top, { color, floor: floating, ground })
       })
     }
   }

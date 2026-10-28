@@ -34,6 +34,14 @@ export interface ExtrusionTarget {
   floors: () => SurfaceBuilder
   /** `undefined` draws no edges. */
   edges: LineBuilder | undefined
+  /** Edges that begin at the ground (`ExtrudeStyle.ground`), not at `bottom`. */
+  ground?: {
+    /** Its height at a point. */
+    at: (x: number, y: number) => number
+    /** Points `[x, y, z, …]` along it from a to b; none: no bottom outline. */
+    path:
+      ((ax: number, ay: number, bx: number, by: number) => number[]) | undefined
+  }
   color: Color
   lineColor: Color
   feature: number
@@ -48,7 +56,8 @@ export interface ExtrusionTarget {
  * Polygons (outer ring, then holes) extruded from `bottom` to `top`: walls
  * (UV: meters along the ring, meters up), a roof, a floor if `floor`. With
  * `edges`, the top and bottom of every wall and its corners — the outline,
- * not the triangles.
+ * not the triangles — or with `ground`, the bottom where the wall leaves
+ * the ground.
  */
 export function extrude(
   target: ExtrusionTarget,
@@ -112,7 +121,9 @@ function edges(
   bottom: number,
   top: number
 ) {
-  const { lineColor: color, feature } = target
+  const { lineColor: color, feature, ground } = target
+  // the ground, where the wall has it: else the wall's end
+  const onWall = (z: number) => Math.min(top, Math.max(bottom, z))
   const n = ring.length / 2
   for (let i = 0; i < n; i++) {
     const h = (i + n - 1) % n
@@ -124,14 +135,31 @@ function edges(
       ring[2 * j + 1]
     ]
     lines.segment(ax, ay, top, bx, by, top, color, feature)
-    lines.segment(ax, ay, bottom, bx, by, bottom, color, feature)
+    if (!ground) {
+      lines.segment(ax, ay, bottom, bx, by, bottom, color, feature)
+    } else if (ground.path) {
+      const p = ground.path(ax, ay, bx, by)
+      for (let k = 3; k < p.length; k += 3) {
+        lines.segment(
+          p[k - 3],
+          p[k - 2],
+          onWall(p[k - 1]),
+          p[k],
+          p[k + 1],
+          onWall(p[k + 2]),
+          color,
+          feature
+        )
+      }
+    }
     // a corner, not a vertex of a curved wall
     const [ux, uy] = [ax - ring[2 * h], ay - ring[2 * h + 1]]
     const [vx, vy] = [bx - ax, by - ay]
     const turn =
       Math.abs(ux * vy - uy * vx) / (Math.hypot(ux, uy) * Math.hypot(vx, vy))
     if (!(turn < CORNER_SINE && ux * vx + uy * vy > 0)) {
-      lines.segment(ax, ay, bottom, ax, ay, top, color, feature)
+      const from = ground ? onWall(ground.at(ax, ay)) : bottom
+      lines.segment(ax, ay, from, ax, ay, top, color, feature)
     }
   }
 }

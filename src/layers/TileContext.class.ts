@@ -56,6 +56,14 @@ export interface ExtrudeStyle {
   lineColor?: Color
   /** Also a floor, facing down (parts that do not stand on the ground). */
   floor?: boolean
+  /**
+   * It stands on the ground, the walls reaching below (`bottom` under the
+   * lowest ground): the edges begin where the walls leave the ground —
+   * the corners from there up, and with `'outline'` the bottom outline
+   * along it, e.g. in wireframe. `true` leaves the outline out: over a
+   * solid terrain it would flicker.
+   */
+  ground?: boolean | 'outline'
   /** The parts the faces and edges go to. */
   parts?: Partial<Record<'walls' | 'roofs' | 'floors' | 'edges', string>>
 }
@@ -448,7 +456,13 @@ export class TileContext<F> {
     polygons: readonly (readonly FlatRing[])[],
     bottom: number,
     top: number,
-    { color, lineColor = color, floor = false, parts = {} }: ExtrudeStyle
+    {
+      color,
+      lineColor = color,
+      floor = false,
+      ground = false,
+      parts = {}
+    }: ExtrudeStyle
   ) {
     const names = { ...EXTRUSION_PARTS, ...parts }
     extrude(
@@ -457,6 +471,15 @@ export class TileContext<F> {
         roofs: this.surface(names.roofs),
         floors: () => this.surface(names.floors),
         edges: this.lines(names.edges),
+        ground: ground
+          ? {
+              at: (x, y) => this.groundAt(x, y),
+              path:
+                ground === 'outline'
+                  ? (ax, ay, bx, by) => this.groundPath(ax, ay, bx, by)
+                  : undefined
+            }
+          : undefined,
         color,
         lineColor,
         feature: this.current,
@@ -469,6 +492,28 @@ export class TileContext<F> {
       top,
       floor
     )
+  }
+
+  /**
+   * Points `[x, y, z, …]` on the ground from a to b, which may reach into
+   * the neighbours: the ends and every crossing of the terrain's triangles,
+   * so that straight lines between them lie on it.
+   */
+  private groundPath(ax: number, ay: number, bx: number, by: number) {
+    const { tileSize, tileSegments: n } = this.map.options
+    const ts = gridCrossings(
+      (ax / tileSize + 0.5) * n,
+      (0.5 - ay / tileSize) * n,
+      (bx / tileSize + 0.5) * n,
+      (0.5 - by / tileSize) * n
+    )
+    const points: number[] = []
+    for (const [k, t] of ts.entries()) {
+      if (k > 0 && t - ts[k - 1] < 1e-12) continue
+      const [x, y] = [ax + (bx - ax) * t, ay + (by - ay) * t]
+      points.push(x, y, this.groundAt(x, y))
+    }
+    return points
   }
 
   /**

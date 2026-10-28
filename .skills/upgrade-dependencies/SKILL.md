@@ -7,15 +7,15 @@ metadata:
 
 # Upgrade dependencies
 
-The repo has **four independent package roots**, each with its own `yarn.lock`
-(Yarn classic 1.x):
+The repo is **one pnpm workspace** of four packages with a single
+`pnpm-lock.yaml` (pnpm 12, pinned by `packageManager`):
 
-| Root             | Bundler        | Notes                                                                                                  |
-| ---------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
-| `.`              | Vite (library) | `three` is a peer + dev dependency                                                                     |
-| `examples/basic` | webpack        | links the library via `link:../..`; `pmtiles` for the Overture source                                  |
-| `examples/react` | Vite           | React Three Fiber + drei, `link:../..`; the live example on GitHub Pages                               |
-| `docs`           | Astro          | Starlight + plugins, `link:..`; `three` for the demos; `@emnapi/runtime` is a peer Yarn 1 does not add |
+| Package          | Bundler        | Notes                                                                     |
+| ---------------- | -------------- | ------------------------------------------------------------------------- |
+| `.`              | Vite (library) | `three` is a peer + dev dependency                                        |
+| `examples/basic` | webpack        | the library as `workspace:*`; `pmtiles` for the Overture source           |
+| `examples/react` | Vite           | React Three Fiber + drei, `workspace:*`; the live example on GitHub Pages |
+| `docs`           | Astro          | Starlight + plugins, `workspace:*`; `three` for the demos                 |
 
 The examples and the docs consume the **built** library (`dist/`), so always
 upgrade and build the root first.
@@ -27,10 +27,8 @@ GLTF, OBJ, STL, USDZ) through `src/export/model.ts`; `test/export` runs them
 ## 1. Inventory
 
 ```bash
-yarn outdated
-(cd examples/basic && yarn outdated)
-(cd examples/react && yarn outdated)
-(cd docs && yarn outdated)
+pnpm outdated -r          # every package of the workspace
+pnpm self-update          # pnpm itself: rewrites `packageManager`
 ```
 
 For every major bump, read the peer ranges and engines **before** editing:
@@ -42,8 +40,8 @@ npm view <pkg>@latest version peerDependencies engines --json
 Also check the pinned tooling outside `package.json`:
 
 - `.mcp.json` — `npm view @playwright/mcp version`, `threejs-devtools-mcp`, `@upstash/context7-mcp`
-- `.github/workflows/*.yml` — latest tags of `actions/checkout`, `actions/setup-node`,
-  `actions/upload-artifact`, `JamesIves/github-pages-deploy-action`
+- `.github/workflows/*.yml` — latest tags of `actions/checkout`, `pnpm/action-setup`,
+  `actions/setup-node`, `actions/upload-artifact`, `JamesIves/github-pages-deploy-action`
   (`curl -s https://api.github.com/repos/<owner>/<repo>/releases/latest`)
 
 ## 2. Version couplings — check these first
@@ -51,11 +49,11 @@ Also check the pinned tooling outside `package.json`:
 | Coupling                                   | Rule                                                                                                                                                                                                |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `typescript` ↔ `typescript-eslint`         | TS must satisfy typescript-eslint's peer range. TS 7 (native compiler) ships no JS compiler API, so TS stays on `~6.0.x` until typescript-eslint supports 7. Keep the same TS line in the examples. |
-| `three` ↔ `@types/three`                   | Same minor (`0.186.x` ↔ `0.186.x`) in **all four roots**.                                                                                                                                           |
+| `three` ↔ `@types/three`                   | Same minor (`0.186.x` ↔ `0.186.x`) in **all four packages**.                                                                                                                                        |
 | `@react-three/fiber` ↔ `react`/`react-dom` | Fiber pins an upper bound (e.g. `>=19 <19.4`); never bump React past it. `@react-three/drei` major follows fiber's major.                                                                           |
 | `vitest` ↔ `vite`, `@vitest/coverage-v8`   | Vitest lists supported Vite majors; coverage-v8 must equal the vitest version.                                                                                                                      |
 | `eslint` ↔ `@eslint/js`                    | Same major.                                                                                                                                                                                         |
-| `@playwright/test` ↔ browsers              | After a bump run `yarn playwright install chromium`.                                                                                                                                                |
+| `@playwright/test` ↔ browsers              | After a bump run `pnpm exec playwright install chromium`.                                                                                                                                           |
 | Node                                       | CI runs Node 24. Check `engines` of vite/vitest/eslint before raising requirements.                                                                                                                 |
 
 Record every upgrade you **cannot** do (and why) — it goes into the report and
@@ -64,10 +62,12 @@ into the "Version constraints" section of `AGENTS.md`.
 ## 3. Apply
 
 Edit ranges in `package.json` (caret for most packages, tilde for `typescript`),
-then run `yarn install` in that root so the lockfile follows. If the lockfile
-fights back, delete `node_modules` + `yarn.lock` for that root and reinstall.
+then run `pnpm install` in the root so the lockfile follows (`pnpm update -r
+--latest <pkg>` does both). A dependency whose build scripts pnpm blocks needs
+an `allowBuilds` entry in `pnpm-workspace.yaml`. Keep a package's version the
+same across the workspace where it can be (`three` in particular: one copy).
 
-Order: root → `yarn build` → `examples/basic` → `examples/react` → `docs`.
+Order: root → `pnpm build` → `examples/basic` → `examples/react` → `docs`.
 
 In `docs`, Astro, `@astrojs/starlight` and its plugins move together: check
 the plugins' peer ranges (`starlight-llm-actions`, `starlight-links-validator`)
@@ -93,11 +93,11 @@ TypeScript in use.
 ## 5. Verify — everything must pass
 
 ```bash
-yarn validate             # typecheck, lint, format:check, unit tests, build
-yarn test:e2e             # real rendering in Chromium: WebGL + WebGPURenderer
-(cd examples/basic && yarn install && yarn build)
-(cd examples/react && yarn install && yarn build)
-(cd docs && yarn install && yarn build)   # astro check, pages, llms.txt, links
+pnpm validate                  # typecheck, lint, format:check, unit tests, build
+pnpm test:e2e                  # real rendering in Chromium: WebGL + WebGPURenderer
+pnpm --dir examples/basic build
+pnpm --dir examples/react build
+pnpm --dir docs build          # astro check, pages, llms.txt, links
 ```
 
 - After a three.js or Playwright bump, check the `backend` annotation of the

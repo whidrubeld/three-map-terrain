@@ -27,7 +27,7 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: `yarn vite playground --port ${port} --strictPort`,
+    command: `pnpm exec vite playground --port ${port} --strictPort`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI
   }

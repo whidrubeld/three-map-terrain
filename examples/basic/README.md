@@ -23,14 +23,14 @@ What it shows ([src/index.ts](src/index.ts)):
   (`map.pick`).
 - **Download GLB / STL** with `map.export()`.
 
-`three-map-terrain` is linked from the repository root, so build the library first:
+`three-map-terrain` is the repository root, a package of the same pnpm
+workspace (`workspace:*`), so build the library first:
 
 ```bash
 # repository root
-yarn && yarn build
+pnpm install && pnpm build
 
 # this folder
-yarn
-yarn start    # webpack-dev-server, http://localhost:8080
-yarn build    # production build into dist/
+pnpm start    # webpack-dev-server, http://localhost:8080
+pnpm build    # production build into dist/
 ```

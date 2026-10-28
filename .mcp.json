@@ -8,7 +8,8 @@
       "command": "npx",
       "args": ["-y", "threejs-devtools-mcp@0.5.0"],
       "env": {
-        "DEV_PORT": "5173"
+        "DEV_PORT": "5173",
+        "BROWSER": "none"
       }
     },
     "context7": {

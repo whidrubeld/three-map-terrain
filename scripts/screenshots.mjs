@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Renders the images in docs/public/images with real tiles — the README's
 // from the built examples, the posters of the docs' demos from the built
-// docs: `yarn build`, build both examples and docs/, then
+// docs: `pnpm build`, build both examples and docs/, then
 // `node scripts/screenshots.mjs [name ...]` (every image, or those named).
 // Uses the installed Google Chrome (it renders on the GPU even headless) and
 // `cwebp` (libwebp) on PATH.

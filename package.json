@@ -1,6 +1,6 @@
 {
   "name": "three-map-terrain",
-  "version": "3.5.2",
+  "version": "3.5.3",
   "description": "Real-world 3D terrain for three.js from any map tiles: elevation, imagery, OpenStreetMap buildings, roads and bridges, water and vegetation, a frame for your own layers, streaming and levels of detail, geolocation, and GLB / STL / USDZ export",
   "author": "whidrubeld <whidrubeld@gmail.com>",
   "license": "MIT",
@@ -32,7 +32,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "validate": "yarn typecheck && yarn lint && yarn format:check && yarn test && yarn build",
+    "validate": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build",
     "screenshots": "node scripts/screenshots.mjs"
   },
   "keywords": [
@@ -76,6 +76,7 @@
     "url": "git+https://github.com/whidrubeld/three-map-terrain.git"
   },
   "homepage": "https://github.com/whidrubeld/three-map-terrain#readme",
+  "packageManager": "pnpm@12.4.2",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",

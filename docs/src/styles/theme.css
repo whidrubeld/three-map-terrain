@@ -213,7 +213,7 @@ pre,
 }
 
 @media (max-width: 50rem) {
-  site-search button {
+  site-search button[data-open-modal] {
     justify-content: center;
     width: var(--sl-menu-button-size);
     height: var(--sl-menu-button-size);
@@ -231,7 +231,7 @@ pre,
   border-radius: 0;
 }
 
-site-search button {
+site-search button[data-open-modal] {
   border: 1px solid var(--line-strong);
   border-radius: 0;
   background: transparent;
@@ -241,7 +241,7 @@ site-search button {
   text-transform: uppercase;
 }
 
-site-search button:hover {
+site-search button[data-open-modal]:hover {
   border-color: var(--fg);
 }
 
@@ -253,6 +253,58 @@ site-search kbd kbd {
 
 site-search dialog {
   border-radius: 0;
+}
+
+/* the search: a square field, square results */
+#starlight__search {
+  --pagefind-ui-border: var(--line-strong);
+  --pagefind-ui-border-radius: 0;
+  --sl-search-corners: 0px;
+}
+
+/* focused, the field's border turns black: no outline around it too */
+#starlight__search .pagefind-ui__search-input:focus-visible {
+  outline: none;
+}
+
+/* the field's clear button, muted: apart from the close button beside it */
+#starlight__search .pagefind-ui__search-clear::before {
+  background-color: var(--muted);
+}
+
+#starlight__search .pagefind-ui__search-clear:hover::before {
+  background-color: var(--fg);
+}
+
+/* on a phone, the search closes with a square as tall as the field, beside
+   it, with Starlight's close icon (the text, "Cancel", stays its name) */
+@media (max-width: 50rem) {
+  #starlight__search {
+    --sl-search-cancel-space: calc(64px * var(--pagefind-ui-scale) + 0.5rem);
+  }
+}
+
+site-search button[data-close-modal] {
+  justify-content: center;
+  width: calc(64px * var(--pagefind-ui-scale));
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0;
+}
+
+site-search button[data-close-modal]:hover {
+  border-color: var(--fg);
+}
+
+site-search button[data-close-modal]::before {
+  content: '';
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m13.41 12 6.3-6.29a1 1 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1 1 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 .33 1.64 1 1 0 0 0 1.09-.22l6.29-6.3 6.29 6.3a1 1 0 0 0 1.64-.33 1 1 0 0 0-.22-1.09L13.41 12Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 /* set inline by Starlight for its own font */
@@ -441,6 +493,13 @@ h1#_top {
   .starlight-llm-actions-row {
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  /* the button on the left: its menu opens to the right, inside the page */
+  .sl-llm-actions[class] .page-actions-menu {
+    right: auto;
+    left: 0;
+    max-width: calc(100vw - 2rem);
   }
 }
 

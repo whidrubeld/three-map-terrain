@@ -1,0 +1,12 @@
+// Zed project settings. TypeScript needs none: vtsls runs the worktree's
+// node_modules/typescript by itself, and Prettier is the root's for every
+// package (docs/ and the examples have none of their own).
+{
+  "languages": {
+    // `pnpm format` checks docs/'s .mdx pages; the MDX extension has no formatter
+    "MDX": { "prettier": { "allowed": true, "parser": "mdx" } },
+    // ... and skips the .astro files (no prettier-plugin-astro), which the
+    // Astro extension would reformat on save
+    "Astro": { "format_on_save": "off" }
+  }
+}
