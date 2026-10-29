@@ -75,7 +75,7 @@ src/                      library (the only published code, plus dist/)
 test/                     Vitest unit tests (Node, no WebGL), mirroring src/;
                           test/support: fakes, terrarium + MVT encoders
 e2e/                      Playwright tests against playground/ with mocked tile servers
-playground/               `pnpm dev` app; query params documented in .skills/verify-rendering
+playground/               `pnpm dev` app; query params documented in .agents/skills/verify-rendering
 examples/basic            plain three.js + webpack: San Francisco, Overture
                           buildings via a custom PMTiles source, OpenFreeMap roads,
                           imagery toned with a `process`
@@ -99,7 +99,7 @@ scripts/screenshots.mjs   renders the images: README's from the built examples,
                           demo posters from the built docs (Chrome + cwebp)
 skills/three-map-terrain  the users' agent skill (SKILL.md): `npx skills add
                           whidrubeld/three-map-terrain`, shipped in the npm package
-.skills/                  contributor skills (symlinked as .claude/skills),
+.agents/skills/           contributor skills (Zed and DSH read them here),
                           `metadata.internal` so `npx skills` hides them
 ```
 
@@ -566,7 +566,7 @@ the README is its storefront (features, install, quick start, links).
 - Prettier: no semicolons, single quotes, no trailing commas. Don't hand-format;
   run `pnpm format`.
 - Every behaviour change needs a unit test; rendering changes need the e2e
-  test (and a visual check, see `.skills/verify-rendering`). A change of
+  test (and a visual check, see `.agents/skills/verify-rendering`). A change of
   the public API or of what users see updates its docs page (and a demo
   using it, and the agent skill if it covers it); the README changes only
   if the features or the quick start do.
@@ -603,7 +603,11 @@ Texture`, then device lost — even for a plain box). The e2e tests then run
   `WebGPURenderer` with `forceWebGL` and annotate the backend; real WebGPU is
   exercised on machines with a GPU (e.g. Playwright with `channel: 'chrome'`).
 
-## MCP servers (`.mcp.json`)
+## MCP servers (`.zed/settings.json` → `context_servers`)
+
+The only source of truth: Zed reads MCP from `context_servers` of a settings
+file and never from `.mcp.json` (removed). Keep the pins here —
+`.agents/skills/upgrade-dependencies` bumps them here too.
 
 - **playwright** — drive the playground/examples, read console, take screenshots.
 - **threejs-devtools** — inspect the live scene graph/materials of the dev
@@ -611,7 +615,7 @@ Texture`, then device lost — even for a plain box). The e2e tests then run
 - **context7** — up-to-date docs for three.js, R3F, Vite, Vitest etc.
   Optional `CONTEXT7_API_KEY` env var raises rate limits.
 
-## Skills (`.skills/`)
+## Skills (`.agents/skills/`)
 
 - `upgrade-dependencies` — bump packages in all four roots, handle couplings
   and three.js migrations, verify.
