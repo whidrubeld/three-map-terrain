@@ -1,4 +1,4 @@
-import{B as e,E as t,I as n,_ as r,g as i,z as a}from"./index-lL8PAkzX.js";var o=class{parse(o){let s=``,c=0,l=0,u=0,d=new e,f=new i,p=new e,m=new a,h=[];function g(e){let n=0,r=0,i=0,a=e.geometry,o=new t,f=a.getAttribute(`position`),g=a.getAttribute(`normal`),_=a.getAttribute(`uv`),v=a.getIndex();if(s+=`o `+e.name+`
+import{$ as e,D as t,Q as n,W as r,o as i,s as a}from"./Demo.astro_astro_type_script_index_0_lang.CjEPV9NW.js";var o=class{parse(o){let s=``,c=0,l=0,u=0,d=new e,f=new i,p=new e,m=new n,h=[];function g(e){let n=0,r=0,i=0,a=e.geometry,o=new t,f=a.getAttribute(`position`),g=a.getAttribute(`normal`),_=a.getAttribute(`uv`),v=a.getIndex();if(s+=`o `+e.name+`
 `,e.material&&e.material.name&&(s+=`usemtl `+e.material.name+`
 `),f!==void 0)for(let t=0,r=f.count;t<r;t++,n++)d.fromBufferAttribute(f,t),d.applyMatrix4(e.matrixWorld),s+=`v `+d.x+` `+d.y+` `+d.z+`
 `;if(_!==void 0)for(let e=0,t=_.count;e<t;e++,i++)m.fromBufferAttribute(_,e),s+=`vt `+m.x+` `+m.y+`
@@ -9,7 +9,7 @@ import{B as e,E as t,I as n,_ as r,g as i,z as a}from"./index-lL8PAkzX.js";var o
 `,i!==void 0)for(let n=0,r=i.count;n<r;n++,t++)d.fromBufferAttribute(i,n),d.applyMatrix4(e.matrixWorld),s+=`v `+d.x+` `+d.y+` `+d.z+`
 `;if(r===`Line`){s+=`l `;for(let e=1,t=i.count;e<=t;e++)s+=c+e+` `;s+=`
 `}if(r===`LineSegments`)for(let e=1,t=e+1,n=i.count;e<n;e+=2,t=e+1)s+=`l `+(c+e)+` `+(c+t)+`
-`;c+=t}function v(e){let t=0,i=e.geometry,a=i.getAttribute(`position`),o=i.getAttribute(`color`);if(s+=`o `+e.name+`
-`,a!==void 0){for(let i=0,c=a.count;i<c;i++,t++)d.fromBufferAttribute(a,i),d.applyMatrix4(e.matrixWorld),s+=`v `+d.x+` `+d.y+` `+d.z,o!==void 0&&(f.fromBufferAttribute(o,i),r.workingToColorSpace(f,n),s+=` `+f.r+` `+f.g+` `+f.b),s+=`
-`;s+=`p `;for(let e=1,t=a.count;e<=t;e++)s+=c+e+` `;s+=`
+`;c+=t}function v(e){let t=0,n=e.geometry,i=n.getAttribute(`position`),o=n.getAttribute(`color`);if(s+=`o `+e.name+`
+`,i!==void 0){for(let n=0,c=i.count;n<c;n++,t++)d.fromBufferAttribute(i,n),d.applyMatrix4(e.matrixWorld),s+=`v `+d.x+` `+d.y+` `+d.z,o!==void 0&&(f.fromBufferAttribute(o,n),a.workingToColorSpace(f,r),s+=` `+f.r+` `+f.g+` `+f.b),s+=`
+`;s+=`p `;for(let e=1,t=i.count;e<=t;e++)s+=c+e+` `;s+=`
 `}c+=t}return o.traverse(function(e){e.isMesh===!0&&g(e),e.isLine===!0&&_(e),e.isPoints===!0&&v(e)}),s}};export{o as OBJExporter};
