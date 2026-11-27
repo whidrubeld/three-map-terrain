@@ -2,6 +2,30 @@
 // node_modules/typescript by itself, and Prettier is the root's for every
 // package (docs/ and the examples have none of their own).
 {
+  // MCP servers: the only source of truth. Zed reads `context_servers` and
+  // nothing else (never `.mcp.json`); version pins live here, so
+  // `.agents/skills/upgrade-dependencies` bumps them here.
+  "context_servers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@0.0.83"]
+    },
+    "threejs-devtools": {
+      "command": "npx",
+      "args": ["-y", "threejs-devtools-mcp@0.5.0"],
+      "env": {
+        "DEV_PORT": "5173",
+        "BROWSER": "none"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@4.4.2"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY:-}"
+      }
+    }
+  },
   "languages": {
     // `pnpm format` checks docs/'s .mdx pages; the MDX extension has no formatter
     "MDX": { "prettier": { "allowed": true, "parser": "mdx" } },

@@ -316,22 +316,31 @@ describe('Vegetation', () => {
     expect(crowns.material.transparent).toBe(false)
   })
 
-  it('caps the trees of a tile', async () => {
-    const { layer } = await setup([wood(0.1, 0.1, 0.9, 0.9)], {
-      maxPerTile: 50
-    })
-    expect(copies(layer, 'trunks')[0].count).toBe(50)
+  it('thins a tile to the share of the grid its budget is, not to a count', async () => {
+    // a wood over 0.8 × 0.8 of a tile: 0.64 of the budget, whatever the wood
+    const trees = [wood(0.1, 0.1, 0.9, 0.9)]
+    const at = (await setup(trees, { maxPerTile: 500 })).layer
+    const more = (await setup(trees, { maxPerTile: 1000 })).layer
+    const few = copies(at, 'trunks')[0].count
+    const many = copies(more, 'trunks')[0].count
+
+    expect(few).toBeGreaterThan(0.55 * 500)
+    expect(few).toBeLessThan(0.75 * 500)
+    // twice the budget, twice the plants
+    expect(many / few).toBeGreaterThan(1.85)
+    expect(many / few).toBeLessThan(2.15)
   })
 
   it('thins a capped tile evenly, never cuts it at a row', async () => {
     const { map, layer } = await setup([wood(0.1, 0.1, 0.9, 0.9)], {
-      maxPerTile: 400
+      maxPerTile: 700
     })
     const trees = positions(layer, 'trunks').map((p) => inTiles(map, p))
     const share = (inside: (p: { x: number; y: number }) => boolean) =>
       trees.filter(inside).length / trees.length
 
-    expect(trees).toHaveLength(400)
+    expect(trees.length).toBeLessThan(0.75 * 700)
+    expect(trees.length).toBeGreaterThan(0.55 * 700)
     // as many in each half of the wood as in the other
     expect(share(({ y }) => y > 0.5)).toBeGreaterThan(0.4)
     expect(share(({ y }) => y > 0.5)).toBeLessThan(0.6)
@@ -342,14 +351,28 @@ describe('Vegetation', () => {
   it('keeps trees in every wood of a capped tile', async () => {
     const { map, layer } = await setup(
       [wood(0.1, 0.1, 0.9, 0.45), wood(0.1, 0.55, 0.9, 0.9)],
-      { maxPerTile: 400 }
+      { maxPerTile: 700 }
     )
     const trees = positions(layer, 'trunks').map((p) => inTiles(map, p))
     const south = trees.filter(({ y }) => y > 0.5).length
 
-    expect(trees).toHaveLength(400)
+    expect(trees.length).toBeLessThan(0.65 * 700)
+    expect(trees.length).toBeGreaterThan(0.45 * 700)
     expect(south / trees.length).toBeGreaterThan(0.4)
     expect(south / trees.length).toBeLessThan(0.6)
+  })
+
+  it('thins a wood crossing tiles to the same density in each of them', async () => {
+    // nine times as much of it in the west tile as in the center one
+    const { map, layer } = await setup([wood(-0.9, 0.1, 0.1, 0.9)], {
+      maxPerTile: 2000
+    })
+    const trees = positions(layer, 'trunks').map((p) => inTiles(map, p))
+    const density = (west: boolean, width: number) =>
+      trees.filter(({ x }) => x < 0 === west).length / width
+
+    expect(density(false, 0.1) / density(true, 0.9)).toBeGreaterThan(0.85)
+    expect(density(false, 0.1) / density(true, 0.9)).toBeLessThan(1.15)
   })
 
   it('plants the same trees every time a capped tile is drawn', async () => {
@@ -366,14 +389,18 @@ describe('Vegetation', () => {
     )
   })
 
-  it('plants every spot of a tile up to the cap, as without one', async () => {
+  it('plants every spot of a wood the budget leaves whole, a share of a bigger one', async () => {
     const trees = [wood(0.2, 0.2, 0.5, 0.5)]
+    // 0.3 × 0.3 of a tile: the budget of a tile full of it keeps it whole
     const all = positions((await setup(trees)).layer, 'trunks')
-    const at = (await setup(trees, { maxPerTile: all.length })).layer
-    const below = (await setup(trees, { maxPerTile: all.length - 1 })).layer
+    const cells = Math.ceil(all.length / 0.09)
+    const whole = (await setup(trees, { maxPerTile: cells })).layer
+    const half = (await setup(trees, { maxPerTile: cells / 2 })).layer
+    const share = positions(half, 'trunks').length / all.length
 
-    expect(positions(at, 'trunks')).toEqual(all)
-    expect(positions(below, 'trunks')).toHaveLength(all.length - 1)
+    expect(positions(whole, 'trunks')).toEqual(all)
+    expect(share).toBeGreaterThan(0.4)
+    expect(share).toBeLessThan(0.6)
   })
 
   it('picks the wood of a tree, and highlights its trees', async () => {
@@ -442,7 +469,9 @@ describe('Vegetation', () => {
       id: 'scrub',
       kind: 'scrub'
     }
-    const { map, layer } = await setup([forest, scrub])
+    const { map, layer } = await setup([forest, scrub], {
+      maxPerTile: Infinity
+    })
     const [bushes] = copies(layer, 'bushes')
     const inside = (
       { x, y }: { x: number; y: number },
@@ -596,6 +625,27 @@ describe('Vegetation', () => {
     expect(copies(layer, 'palms')[0].count).toBeGreaterThan(100)
   })
 
+  it('brings every area to the budget\u2019s density when the cap bites', async () => {
+    // scrub at 5 m is 3.24 times the plants of a wood at 9 m: over the budget
+    // both keep the share of their grid a tile of them may hold — the same
+    // ground per plant, so a scrub and a wood thinned look alike in density
+    const forest: VegetationFeature = {
+      ...wood(0.1, 0.1, 0.4, 0.4),
+      kind: 'forest'
+    }
+    const scrub: VegetationFeature = {
+      ...wood(0.6, 0.6, 0.9, 0.9),
+      id: 'scrub',
+      kind: 'scrub'
+    }
+    const { layer } = await setup([forest, scrub], { maxPerTile: 2000 })
+    const trees = positions(layer, 'trunks').length
+    const bushes = copies(layer, 'bushes')[0].count
+
+    expect(bushes / trees).toBeGreaterThan(0.85)
+    expect(bushes / trees).toBeLessThan(1.15)
+  })
+
   it('spaces every area by its own spacing', async () => {
     const orchard: VegetationFeature = {
       ...wood(0.1, 0.1, 0.4, 0.4),
@@ -606,6 +656,7 @@ describe('Vegetation', () => {
       kind: 'forest'
     }
     const { map, layer } = await setup([orchard, forest], {
+      maxPerTile: Infinity,
       spacing: (_zoom, feature) => (feature.kind === 'orchard' ? 5 : 10)
     })
     const xs = positions(layer, 'trunks').map((p) => inTiles(map, p).x)
@@ -777,14 +828,17 @@ describe('Vegetation clear of other layers', () => {
     expect(Math.min(...distances)).toBeGreaterThanOrEqual(25 - 1e-6)
   })
 
-  it('fills the cap of a tile clear of the water, over the whole wood', async () => {
+  it('thins the whole wood of a tile clear of the water', async () => {
     const { map, trees } = plant(false, 300)
     await map.init()
     await map.whenReady()
     const spots = positions(trees, 'trunks').map((p) => inTiles(map, p))
     const south = spots.filter(({ y }) => y > 0.5).length
 
-    expect(spots).toHaveLength(300)
+    // the wood is 0.8 × 0.8 of the tile: its share of the budget
+    expect(spots.length).toBeLessThan(300)
+    expect(spots.length).toBeGreaterThan(0.4 * 0.64 * 300)
+    // of the whole wood, not of its half
     expect(Math.min(...across(map, trees))).toBeGreaterThanOrEqual(25 - 1e-6)
     expect(south / spots.length).toBeGreaterThan(0.4)
     expect(south / spots.length).toBeLessThan(0.6)

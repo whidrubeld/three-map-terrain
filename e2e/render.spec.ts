@@ -776,7 +776,8 @@ for (const renderer of ['webgl', 'webgpu'] as const) {
     const zoom = 14
     const center = Utils.position2tile(46.57634, 7.9904, zoom)
     // a lake over the NW quadrant, a wood over the NE one, scrub in the SE
-    // one (small: the tile's plants stay under maxPerTile); the SW one bare
+    // one (the tile's plants are thinned to the budget's density, as
+    // everywhere); the SW one bare
     const tile = encodeVectorTile([
       {
         name: 'water',
@@ -871,6 +872,7 @@ for (const renderer of ['webgl', 'webgpu'] as const) {
     ]
     const bare = [...tilePoint(page, 0.1, 0.6), ...tilePoint(page, 0.4, 0.9)]
     // crowns (CROWN_COLOR) cover a good part of the wood, none outside it
+    // (thinned to the same density in every tile: a third at zoom 14)
     const share = await page.evaluate(
       async ({ base64, regions }) => {
         const blob = await (
@@ -906,12 +908,12 @@ for (const renderer of ['webgl', 'webgpu'] as const) {
       },
       { base64: png.toString('base64'), regions: [wood, scrub, bare] }
     )
-    expect(share[0]).toBeGreaterThan(0.05)
+    expect(share[0]).toBeGreaterThan(0.015)
     expect(share[1]).toBe(0)
     expect(share[2]).toBe(0)
     // bushes (BUSH_COLOR) the scrub, nowhere else
     const bushes = await shares(png, [143, 154, 85], [scrub, wood, bare])
-    expect(bushes[0]).toBeGreaterThan(0.05)
+    expect(bushes[0]).toBeGreaterThan(0.007)
     expect(bushes[1]).toBe(0)
     expect(bushes[2]).toBe(0)
 
@@ -930,8 +932,8 @@ for (const renderer of ['webgl', 'webgpu'] as const) {
       [255, 0, 255],
       [wood, scrub, bare]
     )
-    expect(trees).toBeGreaterThan(0.02)
-    expect(outlined).toBeGreaterThan(0.02)
+    expect(trees).toBeGreaterThan(0.01)
+    expect(outlined).toBeGreaterThan(0.01)
     expect(none).toBe(0)
     // the lake: half its blue over the background — blended in sRGB
     // (WebGLRenderer) or in linear (WebGPURenderer)

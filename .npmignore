@@ -1,6 +1,7 @@
 /.github
 /.vscode
 /.zed
+/.agents
 /pnpm-lock.yaml
 /pnpm-workspace.yaml
 /.editorconfig

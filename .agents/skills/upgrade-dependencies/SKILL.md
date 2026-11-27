@@ -39,7 +39,7 @@ npm view <pkg>@latest version peerDependencies engines --json
 
 Also check the pinned tooling outside `package.json`:
 
-- `.mcp.json` — `npm view @playwright/mcp version`, `threejs-devtools-mcp`, `@upstash/context7-mcp`
+- `.zed/settings.json` (`context_servers`) — `npm view @playwright/mcp version`, `threejs-devtools-mcp`, `@upstash/context7-mcp`
 - `.github/workflows/*.yml` — latest tags of `actions/checkout`, `pnpm/action-setup`,
   `actions/setup-node`, `actions/upload-artifact`, `JamesIves/github-pages-deploy-action`
   (`curl -s https://api.github.com/repos/<owner>/<repo>/releases/latest`)
