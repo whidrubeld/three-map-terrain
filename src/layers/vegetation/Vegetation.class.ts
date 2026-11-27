@@ -81,11 +81,15 @@ export interface VegetationOptions {
   /** Meters high, from the lowest to the highest, for bushes without a height. */
   bushHeights: readonly [low: number, high: number]
   /**
-   * At most this many plants on a terrain tile. A tile with more spots is
-   * thinned evenly — every area keeps the same share of its spots, spread
-   * over all of it, the same each time it is drawn: sparser woods, never
-   * cut ones. The share is the tile's, so a thinned tile is sparser than an
-   * unthinned neighbour; a wider `spacing` keeps tiles under it.
+   * At most this many plants on a terrain tile — a tile full of an area, at
+   * its `spacing`. A tile keeps that share of the planting grid wherever the
+   * area lies in it, so a wood looks the same over the whole map: as dense at
+   * its edges as inside, never cut at a tile's edge, the same each time the
+   * tile is drawn. A wood thinner than a tile keeps its share of the grid too
+   * — the budget is a density, not a count: 12 000 with an area over a tenth
+   * of a tile plants a tenth of it. Single trees (points) have no grid and
+   * are never thinned by it; a tile of more plants than this is thinned evenly
+   * by rank.
    */
   maxPerTile: number
   /** Color `highlight()` uses by default. */
@@ -535,8 +539,16 @@ export class Vegetation extends FeatureLayer<VegetationFeature> {
 
     // the tile's spots, area after area; `ends`: where each area's spots end
     let count = 0
+    // and of them, those the tile's share of the grid keeps
+    let kept = 0
     const ends: [VegetationFeature, number][] = []
-    const offer = (x: number, y: number, random: number, rank: number) => {
+    const offer = (
+      x: number,
+      y: number,
+      random: number,
+      rank: number,
+      share: number
+    ) => {
       if (4 * count === spots.length) {
         const grown = new Float64Array(2 * spots.length)
         grown.set(spots)
@@ -546,7 +558,11 @@ export class Vegetation extends FeatureLayer<VegetationFeature> {
       spots[k] = x
       spots[k + 1] = y
       spots[k + 2] = random
-      spots[k + 3] = Math.floor(rank * RANKS)
+      // the bucket of its rank, negated for a spot the share drops
+      const bucket = Math.floor(rank * RANKS)
+      const keep = rank < share
+      spots[k + 3] = keep ? bucket : -1 - bucket
+      if (keep) kept++
     }
 
     // a spot of a grid is planted once: by the first area covering it
@@ -582,10 +598,14 @@ export class Vegetation extends FeatureLayer<VegetationFeature> {
             ? this.options.spacing(tile.z, feature)
             : this.options.spacing
         const cell = spacing / meters // map units
+        // the share of the grid a tile keeps: the cap over a tile full of the
+        // area (`1 / cell` cells each way), the same in every tile of it
+        const share = Math.min(1, maxPerTile * cell * cell)
         for (const [i, [x, y]] of points.entries()) {
           if (within(x, y)) {
             const [ci, cj] = [Math.floor(x / cell), Math.floor(y / cell)]
-            offer(x, y, hash(ci, cj, i), hash(ci, cj, -1 - i))
+            // a single tree stands where it is: no grid to thin it
+            offer(x, y, hash(ci, cj, i), hash(ci, cj, -1 - i), 1)
           }
         }
         for (const polygon of polygons) {
@@ -608,7 +628,7 @@ export class Vegetation extends FeatureLayer<VegetationFeature> {
               const x = (i + hash(i, j, 1)) * cell
               const y = (j + hash(i, j, 2)) * cell
               if (within(x, y) && inside(x, y, rows) && claim(cell, i, j)) {
-                offer(x, y, hash(i, j, 3), hash(i, j, 4))
+                offer(x, y, hash(i, j, 3), hash(i, j, 4), share)
               }
             }
           }
@@ -622,22 +642,26 @@ export class Vegetation extends FeatureLayer<VegetationFeature> {
         layer.covers(spots[4 * k], spots[4 * k + 1], margin)
       )
 
-    // over the cap, the spots of the lowest ranks: every area keeps the same
-    // share of its spots, spread over all of it — never the first rows or areas
-    let chosen: Uint8Array | undefined
-    if (count > maxPerTile) {
-      chosen = new Uint8Array(count)
-      // the spots by rank (a counting sort), in their order within one
+    // points, and areas of other grids, can still take a tile over the cap:
+    // then the spots of the lowest ranks, spread over the whole tile —
+    // never the first rows or areas
+    if (kept > maxPerTile) {
+      // the kept spots by rank (a counting sort), in their order within one
       const starts = new Uint32Array(RANKS + 1)
-      for (let k = 0; k < count; k++) starts[spots[4 * k + 3] + 1]++
+      for (let k = 0; k < count; k++) {
+        const bucket = spots[4 * k + 3]
+        if (bucket >= 0) starts[bucket + 1]++
+      }
       for (let r = 1; r <= RANKS; r++) starts[r] += starts[r - 1]
-      const order = new Uint32Array(count)
-      for (let k = 0; k < count; k++) order[starts[spots[4 * k + 3]]++] = k
-      for (let r = 0, planted = 0; r < count && planted < maxPerTile; r++) {
-        if (clear(order[r])) {
-          chosen[order[r]] = 1
-          planted++
-        }
+      const order = new Uint32Array(kept)
+      for (let k = 0; k < count; k++) {
+        const bucket = spots[4 * k + 3]
+        if (bucket >= 0) order[starts[bucket]++] = k
+      }
+      // the rest of them: dropped as the share drops a spot
+      for (let r = Math.max(0, Math.floor(maxPerTile)); r < kept; r++) {
+        const k = 4 * order[r]
+        spots[k + 3] = -1 - spots[k + 3]
       }
     }
 
@@ -645,7 +669,7 @@ export class Vegetation extends FeatureLayer<VegetationFeature> {
     for (const [feature, end] of ends) {
       ctx.feature(feature, () => {
         for (let k = start; k < end; k++) {
-          if (chosen ? chosen[k] : clear(k)) plant(k, feature)
+          if (spots[4 * k + 3] >= 0 && clear(k)) plant(k, feature)
         }
       })
       start = end

@@ -461,10 +461,16 @@ depends on the published package. After a release, bump it there.
   crowns `CROWN_COLOR`, bushes `BUSH_COLOR`, both the look's `color` if it
   has one, trunks `TRUNK_COLOR`), copies have no `instanceColor`. A tile's
   spots are collected first (one reused `Float64Array`: x, y, `random`,
-  rank); over `maxPerTile` those of the lowest rank (`hash(i, j, 4)`,
-  independent of `random`; a counting sort) are planted, `avoid` asked in
-  that order up to the cap — thinned evenly, the same every draw, never
-  cut at a row or an area; under it every spot. Nothing is planted while
+  rank); `maxPerTile` is a density, not a count: a tile keeps the share of
+  the planting grid a tile _full_ of the area may hold (`maxPerTile * cell²`,
+  `cell` in map units), rank `hash(i, j, 4)` — the same share in every tile,
+  so a wood is as dense at its edges as inside, a smaller area keeps its
+  share of the grid too, and the density never jumps at a tile's edge; a
+  spot's rank is stored negated when its share drops it, so planting is one
+  pass. Points (single trees) have no grid and are never thinned; a tile of
+  more kept spots than `maxPerTile` (points, areas of other grids) is thinned
+  by the lowest ranks (a counting sort), spread over the whole tile — never
+  the first rows or areas. `avoid` drops spots at plant time. Nothing is planted while
   all three parts are hidden (`ctx.visible`) — unless `plant` is given:
   the layer decides where (grid, `avoid`, clipping, cap), `plant(ctx,
 spot, feature, { tree, bush })` what grows there — `tree(height?)`,
